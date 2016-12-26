@@ -17,6 +17,8 @@ public class Request {
     final Socket socket;
     HttpMethod method;
     URI path;
+    String contentType;
+    String bodyTextPlain;
 
     Map<String, String> headers;
     Map<String, String> args;
@@ -49,6 +51,22 @@ public class Request {
      */
     public String getPath() {
         return path.getPath();
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public String getBodyTextPlain() {
+        return bodyTextPlain;
+    }
+
+    public void setBodyTextPlain(String bodyTextPlain) {
+        this.bodyTextPlain = bodyTextPlain;
     }
 
     public Map<String, String> getHeaders() {

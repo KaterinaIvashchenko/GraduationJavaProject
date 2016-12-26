@@ -12,6 +12,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -179,6 +180,7 @@ public class Server implements Closeable {
         StringBuilder sb = new StringBuilder(READER_BUF_SIZE); // TODO
 
         while (readLine(reader, sb) > 0) {
+            System.out.println(sb.toString());
             if (req.method == null)
                 parseRequestLine(req, sb);
             else
@@ -187,7 +189,23 @@ public class Server implements Closeable {
             sb.setLength(0);
         }
 
+        if (req.getContentType() != null) {
+            if (req.getContentType().equals("text/plain")) {
+                readBody(reader, sb);
+                System.out.println(sb.toString());
+                req.setBodyTextPlain(sb.toString());
+            }
+        }
+
         return req;
+    }
+
+    private void readBody(InputStreamReader in, StringBuilder sb) throws IOException {
+        int c;
+
+        while ((c = in.read()) >= 0) {
+            sb.append((char) c);
+        }
     }
 
     private void parseRequestLine(Request req, StringBuilder sb) throws URISyntaxException {
@@ -255,7 +273,15 @@ public class Server implements Closeable {
             }
         }
 
-        req.addHeader(key, sb.substring(start, len).trim());
+        String value = sb.substring(start, len).trim();
+
+        if (key != null) {
+            if (key.equals("Content-Type")) {
+                req.setContentType(value);
+            }
+        }
+
+        req.addHeader(key, value);
     }
 
     private int readLine(InputStreamReader in, StringBuilder sb) throws IOException {
@@ -295,7 +321,14 @@ public class Server implements Closeable {
     }
 
     private boolean isMethodSupported(HttpMethod method) {
-        return method == HttpMethod.GET;
+        switch (method) {
+            case GET: return true;
+            case DELETE: return true;
+            case HEAD: return true;
+            case PUT: return true;
+            case POST: return true;
+            default: return false;
+        }
     }
 
     private class ConnectionHandler implements Runnable {
