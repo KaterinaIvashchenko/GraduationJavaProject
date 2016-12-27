@@ -14,7 +14,6 @@ public class HelloWorldExample {
                 .addHandler("/index", new Handler() {
                     @Override
                     public void handle(Request request, Response response) throws Exception {
-                        String text = request.getBodyTextPlain();
 
                         Writer writer = new OutputStreamWriter(response.getOutputStream());
                         if (request.getMethod().equals(HttpMethod.GET) ||

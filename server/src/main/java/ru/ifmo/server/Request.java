@@ -14,17 +14,17 @@ import java.util.Map;
  * from client.
  */
 public class Request {
-    final Socket socket;
-    HttpMethod method;
-    URI path;
-    String contentType;
-    String bodyTextPlain;
-    int contentLength;
+    private final Socket socket;
+    public HttpMethod method;
+    public URI path;
+    private String contentType;
+    private String bodyTextPlain;
+    private int contentLength;
 
-    Map<String, String> headers;
-    Map<String, String> args;
+    private Map<String, String> headers;
+    private Map<String, String> args;
 
-    Request(Socket socket) {
+    public Request(Socket socket) {
         this.socket = socket;
     }
 
@@ -85,14 +85,14 @@ public class Request {
         return Collections.unmodifiableMap(headers);
     }
 
-    void addHeader(String key, String value) {
+    public void addHeader(String key, String value) {
         if (headers == null)
             headers = new LinkedHashMap<>();
 
         headers.put(key, value);
     }
 
-    void addArgument(String key, String value) {
+    public void addArgument(String key, String value) {
         if (args == null)
             args = new LinkedHashMap<>();
 
