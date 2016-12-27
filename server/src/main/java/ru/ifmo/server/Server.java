@@ -180,7 +180,6 @@ public class Server implements Closeable {
         StringBuilder sb = new StringBuilder(READER_BUF_SIZE); // TODO
 
         while (readLine(reader, sb) > 0) {
-            System.out.println(sb.toString());
             if (req.method == null)
                 parseRequestLine(req, sb);
             else
@@ -191,21 +190,52 @@ public class Server implements Closeable {
 
         if (req.getContentType() != null) {
             if (req.getContentType().equals("text/plain")) {
-                readBody(reader, sb);
-                System.out.println(sb.toString());
+                readBody(reader, sb, req);
                 req.setBodyTextPlain(sb.toString());
+
+            } else if (req.getContentType().equals("application/x-www-form-urlencoded")) {
+                readBody(reader, sb, req);
+                System.out.println(sb.toString());
+                readBodyURLEncoded(req, sb);
             }
         }
 
         return req;
     }
 
-    private void readBody(InputStreamReader in, StringBuilder sb) throws IOException {
+    private void readBody(InputStreamReader in, StringBuilder sb, Request req) throws IOException {
         int c;
-
+        int count = 0;
         while ((c = in.read()) >= 0) {
             sb.append((char) c);
+            count++;
+            if (count == req.getContentLength()) break;
         }
+    }
+
+    private void readBodyURLEncoded(Request req, StringBuilder sb) throws IOException {
+        int start = 0;
+
+        String key = null;
+
+        for (int i = 0; i < sb.length(); i++) {
+            boolean last = i == sb.length() - 1;
+
+            if (key == null && sb.charAt(i) == EQ) {
+                key = sb.substring(start, i);
+
+                start = i + 1;
+            }
+            else if (key != null && (sb.charAt(i) == AMP || last)) {
+                req.addArgument(key, sb.substring(start, last ? i + 1 : i));
+
+                key = null;
+                start = i + 1;
+            }
+        }
+
+        if (key != null)
+            req.addArgument(key, null);
     }
 
     private void parseRequestLine(Request req, StringBuilder sb) throws URISyntaxException {
@@ -278,6 +308,12 @@ public class Server implements Closeable {
         if (key != null) {
             if (key.equals("Content-Type")) {
                 req.setContentType(value);
+            }
+        }
+
+        if (key != null) {
+            if (key.equals("Content-Length")) {
+                req.setContentLength(Integer.parseInt(value));
             }
         }
 

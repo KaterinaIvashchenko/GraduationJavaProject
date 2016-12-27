@@ -98,21 +98,27 @@ public class ServerTest {
     public void testPost() throws Exception {
         HttpRequest request = new HttpPost(SUCCESS_URL);
 
-        assertNotImplemented(request);
+        CloseableHttpResponse response = client.execute(host, request);
+
+        assertStatusCode(HttpStatus.SC_OK, response);
     }
 
     @Test
     public void testPut() throws Exception {
         HttpRequest request = new HttpPut(SUCCESS_URL);
 
-        assertNotImplemented(request);
+        CloseableHttpResponse response = client.execute(host, request);
+
+        assertStatusCode(HttpStatus.SC_OK, response);
     }
 
     @Test
     public void testDelete() throws Exception {
         HttpRequest request = new HttpDelete(SUCCESS_URL);
 
-        assertNotImplemented(request);
+        CloseableHttpResponse response = client.execute(host, request);
+
+        assertStatusCode(HttpStatus.SC_OK, response);
     }
 
     @Test
@@ -121,7 +127,7 @@ public class ServerTest {
 
         CloseableHttpResponse response = client.execute(host, request);
 
-        assertStatusCode(HttpStatus.SC_NOT_IMPLEMENTED, response);
+        assertStatusCode(HttpStatus.SC_OK, response);
     }
 
     @Test

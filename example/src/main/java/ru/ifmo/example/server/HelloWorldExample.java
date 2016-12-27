@@ -14,8 +14,28 @@ public class HelloWorldExample {
                 .addHandler("/index", new Handler() {
                     @Override
                     public void handle(Request request, Response response) throws Exception {
+                        String text = request.getBodyTextPlain();
+
                         Writer writer = new OutputStreamWriter(response.getOutputStream());
-                        writer.write(Http.OK_HEADER + "Hello World!");
+                        if (request.getMethod().equals(HttpMethod.GET) ||
+                                request.getMethod().equals(HttpMethod.DELETE) ||
+                                request.getMethod().equals(HttpMethod.HEAD)) {
+                            writer.write(Http.OK_HEADER + "Request method: " + request.getMethod());
+                        }
+
+                        if (request.getMethod().equals(HttpMethod.POST) || request.getMethod().equals(HttpMethod.PUT)) {
+                            if (request.getContentType().equals("text/plain")) {
+                                writer.write(Http.OK_HEADER + "Request method: " + request.getMethod() + '\n' +
+                                                "Content-Type: " + request.getContentType() + '\n' +
+                                                "Body text: " + request.getBodyTextPlain());
+                            }
+                            if (request.getContentType().equals("application/x-www-form-urlencoded")) {
+                                writer.write(Http.OK_HEADER + "Request method: " + request.getMethod() + '\n' +
+                                                "Content-Type: " + request.getContentType() + '\n' +
+                                                "Body arguments: " + request.getArguments());
+                            }
+                        }
+
                         writer.flush();
                     }
                 });

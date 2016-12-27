@@ -19,6 +19,7 @@ public class Request {
     URI path;
     String contentType;
     String bodyTextPlain;
+    int contentLength;
 
     Map<String, String> headers;
     Map<String, String> args;
@@ -67,6 +68,14 @@ public class Request {
 
     public void setBodyTextPlain(String bodyTextPlain) {
         this.bodyTextPlain = bodyTextPlain;
+    }
+
+    public int getContentLength() {
+        return contentLength;
+    }
+
+    public void setContentLength(int contentLength) {
+        this.contentLength = contentLength;
     }
 
     public Map<String, String> getHeaders() {
