@@ -11,6 +11,10 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import static ru.ifmo.server.Http.SC_BAD_REQUEST;
+import static ru.ifmo.server.Server.respond;
+import static ru.ifmo.server.util.Utils.htmlMessage;
+
 public class ParseRequest {
 
     private static final char LF = '\n';
@@ -38,14 +42,30 @@ public class ParseRequest {
             sb.setLength(0);
         }
 
+        if (req.method == HttpMethod.POST && req.getContentType() == null ||
+                req.method == HttpMethod.PUT && req.getContentType() == null) {
+            respond(SC_BAD_REQUEST, "Bad Request", htmlMessage(SC_BAD_REQUEST + " The request \""
+                    + req.method + "\" has no Content-Type"), socket.getOutputStream());
+            return null;
+        }
+
+        if (req.method == HttpMethod.POST && req.getContentLength() == 0 ||
+                req.method == HttpMethod.PUT && req.getContentLength() == 0) {
+            respond(SC_BAD_REQUEST, "Bad Request", htmlMessage(SC_BAD_REQUEST + " The request \""
+                    + req.method + "\" has no Content"), socket.getOutputStream());
+            return null;
+        }
+
         if (req.getContentType() != null) {
             if (req.getContentType().equals("text/plain")) {
                 readBody(reader, sb, req);
                 req.setBodyTextPlain(sb.toString());
+                //put textPlain in the map with args for JUnit test
+                req.addArgument("TextPlain" , sb.toString());
 
             } else if (req.getContentType().equals("application/x-www-form-urlencoded")) {
                 readBody(reader, sb, req);
-                readBodyURLEncoded(req, sb);
+                parseURLEncoded(req, sb, socket);
             }
         }
 
@@ -156,7 +176,7 @@ public class ParseRequest {
         }
     }
 
-    private static void readBodyURLEncoded(Request req, StringBuilder sb) throws IOException {
+    private static void parseURLEncoded(Request req, StringBuilder sb, Socket socket) throws IOException {
         int start = 0;
 
         String key = null;
@@ -177,8 +197,9 @@ public class ParseRequest {
             }
         }
 
-        if (key != null)
+        if (key != null) {
             req.addArgument(key, null);
+        }
     }
 
     private static void readBody(InputStreamReader in, StringBuilder sb, Request req) throws IOException {
@@ -187,7 +208,11 @@ public class ParseRequest {
         while ((c = in.read()) >= 0) {
             sb.append((char) c);
             count++;
-            if (count == req.getContentLength()) break;
+            if (count == req.getContentLength()) {
+                if (LOG.isTraceEnabled())
+                    LOG.trace("Read line: {}", sb.toString());
+                break;
+            }
         }
     }
 }

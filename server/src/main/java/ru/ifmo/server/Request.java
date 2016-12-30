@@ -109,12 +109,18 @@ public class Request {
         return Collections.unmodifiableMap(args);
     }
 
+    public Map<String, String> getURLEncoded() {
+        return getArguments();
+    }
+
     @Override
     public String toString() {
         return "Request{" +
                 "socket=" + socket +
                 ", method=" + method +
                 ", path=" + path +
+                ", Content-Type=" + contentType +
+                ", Content-Length=" + contentLength +
                 ", headers=" + headers +
                 ", args=" + args +
                 '}';

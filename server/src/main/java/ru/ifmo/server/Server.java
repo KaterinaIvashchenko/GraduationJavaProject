@@ -14,6 +14,7 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -122,6 +123,8 @@ public class Server implements Closeable {
         try {
             req = ParseRequest.parseRequest(sock);
 
+            if (req == null) return;
+
             if (LOG.isDebugEnabled())
                 LOG.debug("Parsed request: {}", req);
         }
@@ -170,7 +173,7 @@ public class Server implements Closeable {
                     sock.getOutputStream());
     }
 
-    private void respond(int code, String statusMsg, String content, OutputStream out) throws IOException {
+    public static void respond(int code, String statusMsg, String content, OutputStream out) throws IOException {
         out.write(("HTTP/1.0" + SPACE + code + SPACE + statusMsg + CRLF + CRLF + content).getBytes());
         out.flush();
     }

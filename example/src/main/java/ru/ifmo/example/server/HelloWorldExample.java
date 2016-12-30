@@ -31,7 +31,7 @@ public class HelloWorldExample {
                             if (request.getContentType().equals("application/x-www-form-urlencoded")) {
                                 writer.write(Http.OK_HEADER + "Request method: " + request.getMethod() + '\n' +
                                                 "Content-Type: " + request.getContentType() + '\n' +
-                                                "Body arguments: " + request.getArguments());
+                                                "Body arguments: " + request.getURLEncoded());
                             }
                         }
 
