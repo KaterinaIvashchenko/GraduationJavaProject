@@ -14,6 +14,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.InputStream;
 import java.net.URI;
 
 import static org.junit.Assert.*;
@@ -31,10 +32,12 @@ public class ServerTest {
 
     private static Server server;
     private static CloseableHttpClient client;
+    private static ServerConfig cfg;
+
 
     @BeforeClass
     public static void initialize() {
-        ServerConfig cfg = new ServerConfig()
+        cfg = new ServerConfig()
                 .addHandler(SUCCESS_URL, new SuccessHandler())
                 .addHandler(SERVER_ERROR_URL, new FailHandler());
 
@@ -83,6 +86,7 @@ public class ServerTest {
         assertStatusCode(HttpStatus.SC_NOT_FOUND, response);
         assertNotNull(EntityUtils.toString(response.getEntity()));
     }
+
 
     @Test
     public void testServerError() throws Exception {
@@ -144,6 +148,30 @@ public class ServerTest {
 
         assertNotImplemented(request);
     }
+
+    @Test
+    public void testDispatcher() throws Exception {
+        cfg.addHandler("dispatched",new DispatchHandler());
+
+        cfg.setDispatcher(new DispatcherTest());
+
+        HttpGet get = new HttpGet(SUCCESS_URL);
+
+        CloseableHttpResponse response = client.execute(host, get);
+        InputStream in = response.getEntity().getContent();
+        StringBuilder sb = new StringBuilder();
+        int c;
+        while ((c = in.read()) >= 0) {
+            sb.append((char) c);
+        }
+        String responseBody = sb.toString();
+//
+//        System.out.println("+++++++++++++++++++++++++++");
+//        System.out.println(sb.toString());
+//        System.out.println("contains: " + responseBody.contains("Test response"));
+        assertEquals("Path not dispatched", responseBody.contains("Test dispatch"), true);
+    }
+
 
     private void assertNotImplemented(HttpRequest request) throws Exception {
         CloseableHttpResponse response = client.execute(host, request);

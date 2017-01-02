@@ -120,8 +120,9 @@ public class ServerConfig {
                 '}';
     }
 
-    public void setDispatcher(Dispatcher dispatcher) {
+    public ServerConfig setDispatcher(Dispatcher dispatcher) {
         this.dispatcher = dispatcher;
+        return this;
     }
 
     public Dispatcher getDispatcher() {
