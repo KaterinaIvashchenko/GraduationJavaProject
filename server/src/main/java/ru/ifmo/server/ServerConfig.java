@@ -26,6 +26,7 @@ public class ServerConfig {
         port = config.port;
         handlers = new HashMap<>(config.handlers);
         socketTimeout = config.socketTimeout;
+        dispatcher = config.dispatcher;
     }
 
     /**
@@ -117,6 +118,7 @@ public class ServerConfig {
                 "port=" + port +
                 ", handlers=" + handlers +
                 ", socketTimeout=" + socketTimeout +
+                ", dispatcher=" + dispatcher +
                 '}';
     }
 

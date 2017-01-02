@@ -6,6 +6,9 @@ package ru.ifmo.server;
 public class DispatcherTest implements Dispatcher{
     @Override
     public String dispatch(Request request, Response response) {
-        return "dispatched";
+        if (request.getPath().equals("/for_dispatch"))
+            return "/dispatched";
+
+        return request.getPath();
     }
 }

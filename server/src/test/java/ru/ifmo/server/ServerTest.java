@@ -32,14 +32,14 @@ public class ServerTest {
 
     private static Server server;
     private static CloseableHttpClient client;
-    private static ServerConfig cfg;
-
 
     @BeforeClass
     public static void initialize() {
-        cfg = new ServerConfig()
+        ServerConfig cfg = new ServerConfig()
                 .addHandler(SUCCESS_URL, new SuccessHandler())
-                .addHandler(SERVER_ERROR_URL, new FailHandler());
+                .addHandler(SERVER_ERROR_URL, new FailHandler())
+                .addHandler("/dispatched",new DispatchHandler())
+                .setDispatcher(new DispatcherTest());
 
         server = Server.start(cfg);
         client = HttpClients.createDefault();
@@ -151,11 +151,7 @@ public class ServerTest {
 
     @Test
     public void testDispatcher() throws Exception {
-        cfg.addHandler("dispatched",new DispatchHandler());
-
-        cfg.setDispatcher(new DispatcherTest());
-
-        HttpGet get = new HttpGet(SUCCESS_URL);
+        HttpGet get = new HttpGet("/for_dispatch");
 
         CloseableHttpResponse response = client.execute(host, get);
         InputStream in = response.getEntity().getContent();
@@ -165,10 +161,7 @@ public class ServerTest {
             sb.append((char) c);
         }
         String responseBody = sb.toString();
-//
-//        System.out.println("+++++++++++++++++++++++++++");
-//        System.out.println(sb.toString());
-//        System.out.println("contains: " + responseBody.contains("Test response"));
+
         assertEquals("Path not dispatched", responseBody.contains("Test dispatch"), true);
     }
 

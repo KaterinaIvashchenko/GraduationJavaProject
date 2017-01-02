@@ -3,7 +3,7 @@ package ru.ifmo.server;
 import static ru.ifmo.server.Http.OK_HEADER;
 
 /**
- * For dispatch from ./index
+ * For dispatch
  */
 public class DispatchHandler implements Handler {
     public static final String OPEN_HTML = "<html><body>";
