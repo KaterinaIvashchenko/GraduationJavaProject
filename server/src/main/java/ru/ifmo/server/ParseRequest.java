@@ -1,10 +1,9 @@
-package ru.ifmo.server.util;
+package ru.ifmo.server;
 
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.ifmo.server.HttpMethod;
-import ru.ifmo.server.Request;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -15,7 +14,7 @@ import static ru.ifmo.server.Http.SC_BAD_REQUEST;
 import static ru.ifmo.server.Server.respond;
 import static ru.ifmo.server.util.Utils.htmlMessage;
 
-public class ParseRequest {
+class ParseRequest {
 
     private static final char LF = '\n';
     private static final char CR = '\r';
@@ -24,10 +23,12 @@ public class ParseRequest {
     private static final char AMP = '&';
     private static final char EQ = '=';
     private static final int READER_BUF_SIZE = 1024;
+    private static final String MIME_TEXT_PLAIN = "text/plain";
+    private static final String MIME_URL_ENCODED = "application/x-www-form-urlencoded";
 
     private static final Logger LOG = LoggerFactory.getLogger(ParseRequest.class);
 
-    public static Request parseRequest(Socket socket) throws IOException, URISyntaxException {
+    static Request parseRequest(Socket socket) throws IOException, URISyntaxException {
         InputStreamReader reader = new InputStreamReader(socket.getInputStream());
 
         Request req = new Request(socket);
@@ -42,30 +43,29 @@ public class ParseRequest {
             sb.setLength(0);
         }
 
-        if (req.method == HttpMethod.POST && req.getContentType() == null ||
-                req.method == HttpMethod.PUT && req.getContentType() == null) {
-            respond(SC_BAD_REQUEST, "Bad Request", htmlMessage(SC_BAD_REQUEST + " The request \""
-                    + req.method + "\" has no Content-Type"), socket.getOutputStream());
-            return null;
+        if (req.method == HttpMethod.POST || req.method == HttpMethod.PUT) {
+
+            if (req.getBody().getContentType() == null) {
+                respond(SC_BAD_REQUEST, "Bad Request", htmlMessage(SC_BAD_REQUEST + " The request \""
+                        + req.method + "\" has no Content-Type"), socket.getOutputStream());
+                return null;
+            }
+
+            if (req.getBody().getContentLength() == 0) {
+                respond(SC_BAD_REQUEST, "Bad Request", htmlMessage(SC_BAD_REQUEST + " The request \""
+                        + req.method + "\" has no Content"), socket.getOutputStream());
+                return null;
+            }
         }
 
-        if (req.method == HttpMethod.POST && req.getContentLength() == 0 ||
-                req.method == HttpMethod.PUT && req.getContentLength() == 0) {
-            respond(SC_BAD_REQUEST, "Bad Request", htmlMessage(SC_BAD_REQUEST + " The request \""
-                    + req.method + "\" has no Content"), socket.getOutputStream());
-            return null;
-        }
-
-        if (req.getContentType() != null) {
-            if (req.getContentType().equals("text/plain")) {
+        if (req.getBody().getContentType() != null) {
+            if (req.getBody().getContentType().equals(MIME_TEXT_PLAIN)) {
                 readBody(reader, sb, req);
-                req.setBodyTextPlain(sb.toString());
-                //put textPlain in the map with args for JUnit test
-                req.addArgument("TextPlain" , sb.toString());
+                req.getBody().bodyTextPlain = sb.toString();
 
-            } else if (req.getContentType().equals("application/x-www-form-urlencoded")) {
+            } else if (req.getBody().getContentType().equals(MIME_URL_ENCODED)) {
                 readBody(reader, sb, req);
-                parseURLEncoded(req, sb, socket);
+                parseURLEncoded(req, sb);
             }
         }
 
@@ -110,21 +110,7 @@ public class ParseRequest {
             }
         }
 
-        String value = sb.substring(start, len).trim();
-
-        if (key != null) {
-            if (key.equals("Content-Type")) {
-                req.setContentType(value);
-            }
-        }
-
-        if (key != null) {
-            if (key.equals("Content-Length")) {
-                req.setContentLength(Integer.parseInt(value));
-            }
-        }
-
-        req.addHeader(key, value);
+        req.addHeader(key, sb.substring(start, len).trim());
     }
 
     private static void parseRequestLine(Request req, StringBuilder sb) throws URISyntaxException {
@@ -176,7 +162,7 @@ public class ParseRequest {
         }
     }
 
-    private static void parseURLEncoded(Request req, StringBuilder sb, Socket socket) throws IOException {
+    private static void parseURLEncoded(Request req, StringBuilder sb) throws IOException {
         int start = 0;
 
         String key = null;
@@ -208,7 +194,7 @@ public class ParseRequest {
         while ((c = in.read()) >= 0) {
             sb.append((char) c);
             count++;
-            if (count == req.getContentLength()) {
+            if (count == req.getBody().getContentLength()) {
                 if (LOG.isTraceEnabled())
                     LOG.trace("Read line: {}", sb.toString());
                 break;

@@ -15,17 +15,19 @@ import java.util.Map;
  */
 public class Request {
     private final Socket socket;
-    public HttpMethod method;
-    public URI path;
-    private String contentType;
-    private String bodyTextPlain;
-    private int contentLength;
+    HttpMethod method;
+    URI path;
 
+    private static final String HEADER_NAME_CONTENT_TYPE = "Content-Type";
+    private static final String HEADER_NAME_CONTENT_LENGTH = "Content-Length";
+
+    private RequestBody body;
     private Map<String, String> headers;
     private Map<String, String> args;
 
     public Request(Socket socket) {
         this.socket = socket;
+        body = new RequestBody();
     }
 
     /**
@@ -54,28 +56,11 @@ public class Request {
         return path.getPath();
     }
 
-    public String getContentType() {
-        return contentType;
-    }
-
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
-
-    public String getBodyTextPlain() {
-        return bodyTextPlain;
-    }
-
-    public void setBodyTextPlain(String bodyTextPlain) {
-        this.bodyTextPlain = bodyTextPlain;
-    }
-
-    public int getContentLength() {
-        return contentLength;
-    }
-
-    public void setContentLength(int contentLength) {
-        this.contentLength = contentLength;
+    /**
+     * @return Request body.
+     */
+    public RequestBody getBody() {
+        return body;
     }
 
     public Map<String, String> getHeaders() {
@@ -85,14 +70,20 @@ public class Request {
         return Collections.unmodifiableMap(headers);
     }
 
-    public void addHeader(String key, String value) {
+    void addHeader(String key, String value) {
         if (headers == null)
             headers = new LinkedHashMap<>();
+
+        if (key.equals(HEADER_NAME_CONTENT_TYPE))
+            body.contentType = value;
+
+        if (key.equals(HEADER_NAME_CONTENT_LENGTH))
+            body.contentLength = Integer.parseInt(value);
 
         headers.put(key, value);
     }
 
-    public void addArgument(String key, String value) {
+    void addArgument(String key, String value) {
         if (args == null)
             args = new LinkedHashMap<>();
 
@@ -109,18 +100,14 @@ public class Request {
         return Collections.unmodifiableMap(args);
     }
 
-    public Map<String, String> getURLEncoded() {
-        return getArguments();
-    }
-
     @Override
     public String toString() {
         return "Request{" +
                 "socket=" + socket +
                 ", method=" + method +
                 ", path=" + path +
-                ", Content-Type=" + contentType +
-                ", Content-Length=" + contentLength +
+                ", Content-Type=" + body.getContentType() +
+                ", Content-Length=" + body.getContentLength() +
                 ", headers=" + headers +
                 ", args=" + args +
                 '}';

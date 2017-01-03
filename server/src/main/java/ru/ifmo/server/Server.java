@@ -2,19 +2,14 @@ package ru.ifmo.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.ifmo.server.util.ParseRequest;
 import ru.ifmo.server.util.Utils;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -173,7 +168,7 @@ public class Server implements Closeable {
                     sock.getOutputStream());
     }
 
-    public static void respond(int code, String statusMsg, String content, OutputStream out) throws IOException {
+    static void respond(int code, String statusMsg, String content, OutputStream out) throws IOException {
         out.write(("HTTP/1.0" + SPACE + code + SPACE + statusMsg + CRLF + CRLF + content).getBytes());
         out.flush();
     }
@@ -189,11 +184,7 @@ public class Server implements Closeable {
 
     private boolean isMethodSupported(HttpMethod method) {
         switch (method) {
-            case GET: return true;
-            case DELETE: return true;
-            case HEAD: return true;
-            case PUT: return true;
-            case POST: return true;
+            case GET: case DELETE: case HEAD: case PUT: case POST: return true;
             default: return false;
         }
     }

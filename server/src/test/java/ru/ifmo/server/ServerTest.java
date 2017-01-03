@@ -1,40 +1,24 @@
 package ru.ifmo.server;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.EntityTemplate;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-import sun.nio.cs.ISO_8859_2;
-import sun.nio.cs.UTF_32;
+import org.junit.*;
 
-import javax.print.attribute.standard.MediaSize;
-import java.awt.*;
-import java.awt.image.ImagingOpException;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.*;
 import static ru.ifmo.server.TestUtils.*;
@@ -48,6 +32,11 @@ public class ServerTest {
     private static final String SUCCESS_URL = "/test_success";
     private static final String NOT_FOUND_URL = "/test_not_found";
     private static final String SERVER_ERROR_URL = "/test_fail";
+    private static final String TEXT_PLAIN_URL = "/test_text_plain";
+
+    private static final String MIME_TEXT_PLAIN = "text/plain";
+    private static final String MIME_URL_ENCODED = "application/x-www-form-urlencoded";
+    private static final String HEADER_NAME_CONTENT_TYPE = "Content-Type";
 
     private static Server server;
     private static CloseableHttpClient client;
@@ -56,21 +45,31 @@ public class ServerTest {
     public static void initialize() {
         ServerConfig cfg = new ServerConfig()
                 .addHandler(SUCCESS_URL, new SuccessHandler())
-                .addHandler(SERVER_ERROR_URL, new FailHandler());
+                .addHandler(SERVER_ERROR_URL, new FailHandler())
+                .addHandler(TEXT_PLAIN_URL, new TextPlainHandler());
 
         server = Server.start(cfg);
-        client = HttpClients.createDefault();
+
     }
 
     @AfterClass
     public static void stop() {
         IOUtils.closeQuietly(server);
-        IOUtils.closeQuietly(client);
-
         server = null;
-        client = null;
     }
 
+    @Before
+    @Test
+    public void init() {
+        client = HttpClients.createDefault();
+    }
+
+    @After
+    @Test
+    public void close() {
+        IOUtils.closeQuietly(client);
+        client = null;
+    }
 
     @Test
     public void testSuccess() throws Exception {
@@ -100,7 +99,7 @@ public class ServerTest {
         URI uri = new URI(SUCCESS_URL);
         HttpPost post = new HttpPost(uri);
 
-        ArrayList parameters = new ArrayList();
+        List<BasicNameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair("name", "java"));
         parameters.add(new BasicNameValuePair("id", "5"));
         post.setEntity(new UrlEncodedFormEntity(parameters));
@@ -114,18 +113,18 @@ public class ServerTest {
 
     @Test
     public void testPostTextPlain() throws IOException, URISyntaxException {
-        URI uri = new URI(SUCCESS_URL);
+        URI uri = new URI(TEXT_PLAIN_URL);
         HttpPost post = new HttpPost(uri);
 
         StringEntity stringEntity = new StringEntity("java");
-        stringEntity.setContentType("text/plain");
+        stringEntity.setContentType(MIME_TEXT_PLAIN);
         post.setEntity(stringEntity);
 
         CloseableHttpResponse response = client.execute(host, post);
 
         assertStatusCode(HttpStatus.SC_OK, response);
         assertEquals(SuccessHandler.TEST_RESPONSE +
-                        "<br>{TextPlain=java}" +
+                        "<br>java" +
                         SuccessHandler.CLOSE_HTML,
                 EntityUtils.toString(response.getEntity()));
     }
@@ -135,7 +134,7 @@ public class ServerTest {
         URI uri = new URI(SUCCESS_URL);
         HttpPut put = new HttpPut(uri);
 
-        ArrayList parameters = new ArrayList();
+        List<BasicNameValuePair> parameters = new ArrayList<>();
         parameters.add(new BasicNameValuePair("name", "java"));
         parameters.add(new BasicNameValuePair("id", "5"));
         put.setEntity(new UrlEncodedFormEntity(parameters));
@@ -149,18 +148,18 @@ public class ServerTest {
 
     @Test
     public void testPutTextPlain() throws IOException, URISyntaxException {
-        URI uri = new URI(SUCCESS_URL);
+        URI uri = new URI(TEXT_PLAIN_URL);
         HttpPut put = new HttpPut(uri);
 
         StringEntity stringEntity = new StringEntity("java");
-        stringEntity.setContentType("text/plain");
+        stringEntity.setContentType(MIME_TEXT_PLAIN);
         put.setEntity(stringEntity);
 
         CloseableHttpResponse response = client.execute(host, put);
 
         assertStatusCode(HttpStatus.SC_OK, response);
         assertEquals(SuccessHandler.TEST_RESPONSE +
-                        "<br>{TextPlain=java}" +
+                        "<br>java" +
                         SuccessHandler.CLOSE_HTML,
                 EntityUtils.toString(response.getEntity()));
     }
@@ -241,7 +240,6 @@ public class ServerTest {
         CloseableHttpResponse response = client.execute(host, request);
 
         assertStatusCode(HttpStatus.SC_BAD_REQUEST, response);
-        assertNotNull(EntityUtils.toString(response.getEntity()));
     }
 
     @Test
@@ -251,29 +249,26 @@ public class ServerTest {
         CloseableHttpResponse response = client.execute(host, request);
 
         assertStatusCode(HttpStatus.SC_BAD_REQUEST, response);
-        assertNotNull(EntityUtils.toString(response.getEntity()));
     }
 
     @Test
     public void testPutWithoutContent() throws Exception {
         HttpRequest request = new HttpPut(SUCCESS_URL);
-        request.setHeader("Content-Type", "application/x-www-form-urlencoded");
+        request.setHeader(HEADER_NAME_CONTENT_TYPE, MIME_URL_ENCODED);
 
         CloseableHttpResponse response = client.execute(host, request);
 
         assertStatusCode(HttpStatus.SC_BAD_REQUEST, response);
-        assertNotNull(EntityUtils.toString(response.getEntity()));
     }
 
     @Test
     public void testPostWithoutContent() throws Exception {
         HttpRequest request = new HttpPost(SUCCESS_URL);
-        request.setHeader("Content-Type", "application/x-www-form-urlencoded");
+        request.setHeader(HEADER_NAME_CONTENT_TYPE, MIME_URL_ENCODED);
 
         CloseableHttpResponse response = client.execute(host, request);
 
         assertStatusCode(HttpStatus.SC_BAD_REQUEST, response);
-        assertNotNull(EntityUtils.toString(response.getEntity()));
     }
 
 
