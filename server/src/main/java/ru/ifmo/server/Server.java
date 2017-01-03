@@ -59,6 +59,7 @@ public class Server implements Closeable {
     private ServerSocket socket;
 
     private ExecutorService acceptorPool;
+    private ExecutorService multiThreadedPool;
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
@@ -114,7 +115,27 @@ public class Server implements Closeable {
 
         socket = null;
     }
+    private class NewConnection implements Runnable {
+        Socket sock;
+        NewConnection(Socket sock) {
+            this.sock = sock;
+        }
 
+        @Override
+        public void run() {
+            try {
+                processConnection(sock);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    sock.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
     private void processConnection(Socket sock) throws IOException {
         if (LOG.isDebugEnabled())
             LOG.debug("Accepting connection on: {}", sock);
@@ -300,17 +321,28 @@ public class Server implements Closeable {
 
     private class ConnectionHandler implements Runnable {
         public void run() {
+            multiThreadedPool = Executors.newCachedThreadPool();
             while (!Thread.currentThread().isInterrupted()) {
-                try (Socket sock = socket.accept()) {
+//                try {
+//                    Socket sock = socket.accept();
+//                    sock.setSoTimeout(config.getSocketTimeout());
+//                    processPool.submit(new ProcessConnection(sock));
+
+                    try (Socket sock = socket.accept()) {
+
                     sock.setSoTimeout(config.getSocketTimeout());
 
-                    processConnection(sock);
-                }
+                    Socket tmpSock = new Socket(sock.getInetAddress(), sock.getLocalPort());
+
+                    multiThreadedPool.submit(new NewConnection(tmpSock));
+
+                    }
                 catch (Exception e) {
                     if (!Thread.currentThread().isInterrupted())
                         LOG.error("Error accepting connection", e);
                 }
             }
+
         }
     }
 }
