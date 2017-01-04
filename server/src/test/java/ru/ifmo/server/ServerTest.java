@@ -14,6 +14,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.junit.*;
 
+import java.io.InputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -44,6 +45,9 @@ public class ServerTest {
                 .addHandler(SUCCESS_URL, new SuccessHandler())
                 .addHandler(SERVER_ERROR_URL, new FailHandler())
                 .addHandler(TEXT_PLAIN_URL, new TextPlainHandler());
+                .addHandler(SERVER_ERROR_URL, new FailHandler())
+                .addHandler(DispatcherTest.DISPATCHED_URL,new DispatchHandler())
+                .setDispatcher(new DispatcherTest());
 
         server = Server.start(cfg);
 
@@ -52,6 +56,8 @@ public class ServerTest {
     @AfterClass
     public static void stop() {
         IOUtils.closeQuietly(server);
+        IOUtils.closeQuietly(client);
+
         server = null;
     }
 
@@ -169,6 +175,7 @@ public class ServerTest {
         assertNotNull(EntityUtils.toString(response.getEntity()));
     }
 
+
     @Test
     public void testServerError() throws Exception {
         HttpGet get = new HttpGet(SERVER_ERROR_URL);
@@ -219,6 +226,17 @@ public class ServerTest {
 
         assertNotImplemented(request);
     }
+
+    @Test
+    public void testDispatcher() throws Exception {
+        HttpGet get = new HttpGet(DispatcherTest.FOR_DISPATCH_URL);
+
+        CloseableHttpResponse response = client.execute(host, get);
+        String responseBody = EntityUtils.toString(response.getEntity());
+
+        assertEquals("Path not dispatched", responseBody.contains("Test dispatch"), true);
+    }
+
 
     private void assertNotImplemented(HttpRequest request) throws Exception {
         CloseableHttpResponse response = client.execute(host, request);
