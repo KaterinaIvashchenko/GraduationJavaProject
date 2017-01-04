@@ -37,14 +37,14 @@ public class ServerTest {
     private static final String TEXT_PLAIN_URL = "/test_text_plain";
 
     private static Server server;
-    private CloseableHttpClient client;
+    private static CloseableHttpClient client;
 
     @BeforeClass
     public static void initialize() {
         ServerConfig cfg = new ServerConfig()
                 .addHandler(SUCCESS_URL, new SuccessHandler())
                 .addHandler(SERVER_ERROR_URL, new FailHandler())
-                .addHandler(TEXT_PLAIN_URL, new TextPlainHandler());
+                .addHandler(TEXT_PLAIN_URL, new TextPlainHandler())
                 .addHandler(SERVER_ERROR_URL, new FailHandler())
                 .addHandler(DispatcherTest.DISPATCHED_URL,new DispatchHandler())
                 .setDispatcher(new DispatcherTest());
