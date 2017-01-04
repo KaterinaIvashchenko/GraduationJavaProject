@@ -20,6 +20,8 @@ public class SimpleExample {
                 .addHandler("/info.html", printHandler)
                 .addHandler("/info", printHandler);
 
+        config.setPort(8081);
+
         // Start server
         @SuppressWarnings("unused")
         Server server = Server.start(config);

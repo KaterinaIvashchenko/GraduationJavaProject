@@ -58,6 +58,11 @@ public class ServerConfig {
         return this;
     }
 
+    public ServerConfig addHandlerClass(String path, Class<? extends Handler> cls) {
+
+        return this;
+    }
+
     /**
      * Add handler mappings.
      *

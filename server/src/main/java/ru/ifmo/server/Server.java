@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import ru.ifmo.server.util.Utils;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
@@ -58,6 +59,10 @@ public class Server implements Closeable {
 
     private Server(ServerConfig config) {
         this.config = new ServerConfig(config);
+    }
+
+    public static Server start(File file) {
+        return start(new ConfigLoader().load(file));
     }
 
     /**
