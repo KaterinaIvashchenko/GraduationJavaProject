@@ -14,7 +14,6 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.junit.*;
 
-import java.io.InputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -37,7 +36,7 @@ public class ServerTest {
     private static final String TEXT_PLAIN_URL = "/test_text_plain";
 
     private static Server server;
-    private static CloseableHttpClient client;
+    private CloseableHttpClient client;
 
     @BeforeClass
     public static void initialize() {
@@ -56,7 +55,6 @@ public class ServerTest {
     @AfterClass
     public static void stop() {
         IOUtils.closeQuietly(server);
-        IOUtils.closeQuietly(client);
 
         server = null;
     }

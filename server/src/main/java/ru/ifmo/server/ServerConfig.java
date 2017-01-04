@@ -122,13 +122,24 @@ public class ServerConfig {
                 '}';
     }
 
+    /**
+     * Set request dispatcher.
+     *
+     * @param dispatcher Dispatcher to set.
+     * @return Itself for chaining.
+     * @see Dispatcher
+     */
     public ServerConfig setDispatcher(Dispatcher dispatcher) {
         this.dispatcher = dispatcher;
         return this;
     }
 
+    /**
+     * Get request dispatcher.
+     *
+     * @return Request dispatcher or <tt>null</tt> if nothing set.
+     */
     public Dispatcher getDispatcher() {
-
         return dispatcher;
     }
 
