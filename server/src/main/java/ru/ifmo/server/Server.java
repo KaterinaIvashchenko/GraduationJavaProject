@@ -116,7 +116,7 @@ public class Server implements Closeable {
         Request req;
 
         try {
-            req = ParseRequest.parseRequest(sock);
+            req = RequestParser.parseRequest(sock);
 
             if (req == null) return;
 
@@ -184,8 +184,15 @@ public class Server implements Closeable {
 
     private boolean isMethodSupported(HttpMethod method) {
         switch (method) {
-            case GET: case DELETE: case HEAD: case PUT: case POST: return true;
-            default: return false;
+            case GET:
+            case DELETE:
+            case HEAD:
+            case PUT:
+            case POST:
+                return true;
+
+            default:
+                return false;
         }
     }
 

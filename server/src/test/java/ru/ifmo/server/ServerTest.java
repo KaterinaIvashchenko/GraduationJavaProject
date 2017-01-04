@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.*;
+import static ru.ifmo.server.Http.*;
 import static ru.ifmo.server.TestUtils.*;
 
 /**
@@ -34,12 +35,8 @@ public class ServerTest {
     private static final String SERVER_ERROR_URL = "/test_fail";
     private static final String TEXT_PLAIN_URL = "/test_text_plain";
 
-    private static final String MIME_TEXT_PLAIN = "text/plain";
-    private static final String MIME_URL_ENCODED = "application/x-www-form-urlencoded";
-    private static final String HEADER_NAME_CONTENT_TYPE = "Content-Type";
-
     private static Server server;
-    private static CloseableHttpClient client;
+    private CloseableHttpClient client;
 
     @BeforeClass
     public static void initialize() {
@@ -59,13 +56,11 @@ public class ServerTest {
     }
 
     @Before
-    @Test
     public void init() {
         client = HttpClients.createDefault();
     }
 
     @After
-    @Test
     public void close() {
         IOUtils.closeQuietly(client);
         client = null;
@@ -270,6 +265,4 @@ public class ServerTest {
 
         assertStatusCode(HttpStatus.SC_BAD_REQUEST, response);
     }
-
-
 }

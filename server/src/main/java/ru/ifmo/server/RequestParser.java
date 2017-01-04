@@ -10,11 +10,12 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static ru.ifmo.server.Http.SC_BAD_REQUEST;
+import static ru.ifmo.server.Http.*;
+import static ru.ifmo.server.HttpMethod.*;
 import static ru.ifmo.server.Server.respond;
 import static ru.ifmo.server.util.Utils.htmlMessage;
 
-class ParseRequest {
+class RequestParser {
 
     private static final char LF = '\n';
     private static final char CR = '\r';
@@ -23,10 +24,8 @@ class ParseRequest {
     private static final char AMP = '&';
     private static final char EQ = '=';
     private static final int READER_BUF_SIZE = 1024;
-    private static final String MIME_TEXT_PLAIN = "text/plain";
-    private static final String MIME_URL_ENCODED = "application/x-www-form-urlencoded";
 
-    private static final Logger LOG = LoggerFactory.getLogger(ParseRequest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RequestParser.class);
 
     static Request parseRequest(Socket socket) throws IOException, URISyntaxException {
         InputStreamReader reader = new InputStreamReader(socket.getInputStream());
@@ -43,7 +42,7 @@ class ParseRequest {
             sb.setLength(0);
         }
 
-        if (req.method == HttpMethod.POST || req.method == HttpMethod.PUT) {
+        if (req.method == POST || req.method == PUT) {
 
             if (req.getBody().getContentType() == null) {
                 respond(SC_BAD_REQUEST, "Bad Request", htmlMessage(SC_BAD_REQUEST + " The request \""
@@ -58,16 +57,7 @@ class ParseRequest {
             }
         }
 
-        if (req.getBody().getContentType() != null) {
-            if (req.getBody().getContentType().equals(MIME_TEXT_PLAIN)) {
-                readBody(reader, sb, req);
-                req.getBody().bodyTextPlain = sb.toString();
-
-            } else if (req.getBody().getContentType().equals(MIME_URL_ENCODED)) {
-                readBody(reader, sb, req);
-                parseURLEncoded(req, sb);
-            }
-        }
+        readBody(reader, sb, req);
 
         return req;
     }
@@ -188,17 +178,30 @@ class ParseRequest {
         }
     }
 
+    // TODO support binary content
     private static void readBody(InputStreamReader in, StringBuilder sb, Request req) throws IOException {
+        final RequestBody body = req.getBody();
+
+        if (body.contentLength == 0)
+            return;
+
         int c;
         int count = 0;
         while ((c = in.read()) >= 0) {
             sb.append((char) c);
             count++;
-            if (count == req.getBody().getContentLength()) {
+            if (count == body.getContentLength()) {
                 if (LOG.isTraceEnabled())
-                    LOG.trace("Read line: {}", sb.toString());
+                    LOG.trace("Read content: {}", sb.toString());
+
                 break;
             }
         }
+
+        if (MIME_TEXT_PLAIN.equals(body.contentType))
+            body.bodyTextPlain = sb.toString();
+
+        else if (MIME_URL_ENCODED.equals(body.contentType))
+            parseURLEncoded(req, sb);
     }
 }
