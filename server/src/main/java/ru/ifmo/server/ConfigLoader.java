@@ -3,9 +3,11 @@ package ru.ifmo.server;
 import java.io.File;
 
 /**
- * Created by xmitya on 02.01.17.
+ * Universal config file parser
  */
+
 public class ConfigLoader {
+
     public ServerConfig load(File file) {
 
         return getParser(file).parse();
