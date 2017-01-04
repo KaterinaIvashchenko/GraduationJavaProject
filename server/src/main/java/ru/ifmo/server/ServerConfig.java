@@ -13,6 +13,8 @@ public class ServerConfig {
     private int port = DFLT_PORT;
     private Map<String, Handler> handlers;
     private int socketTimeout;
+    private Dispatcher dispatcher;
+
 
     public ServerConfig() {
         handlers = new HashMap<>();
@@ -24,6 +26,7 @@ public class ServerConfig {
         port = config.port;
         handlers = new HashMap<>(config.handlers);
         socketTimeout = config.socketTimeout;
+        dispatcher = config.dispatcher;
     }
 
     /**
@@ -120,6 +123,29 @@ public class ServerConfig {
                 "port=" + port +
                 ", handlers=" + handlers +
                 ", socketTimeout=" + socketTimeout +
+                ", dispatcher=" + dispatcher +
                 '}';
     }
+
+    /**
+     * Set request dispatcher.
+     *
+     * @param dispatcher Dispatcher to set.
+     * @return Itself for chaining.
+     * @see Dispatcher
+     */
+    public ServerConfig setDispatcher(Dispatcher dispatcher) {
+        this.dispatcher = dispatcher;
+        return this;
+    }
+
+    /**
+     * Get request dispatcher.
+     *
+     * @return Request dispatcher or <tt>null</tt> if nothing set.
+     */
+    public Dispatcher getDispatcher() {
+        return dispatcher;
+    }
+
 }
