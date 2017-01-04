@@ -4,7 +4,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -38,7 +37,7 @@ public class ServerTest {
         ServerConfig cfg = new ServerConfig()
                 .addHandler(SUCCESS_URL, new SuccessHandler())
                 .addHandler(SERVER_ERROR_URL, new FailHandler())
-                .addHandler("/dispatched",new DispatchHandler())
+                .addHandler(DispatcherTest.DISPATCHED_URL,new DispatchHandler())
                 .setDispatcher(new DispatcherTest());
 
         server = Server.start(cfg);
@@ -151,16 +150,10 @@ public class ServerTest {
 
     @Test
     public void testDispatcher() throws Exception {
-        HttpGet get = new HttpGet("/for_dispatch");
+        HttpGet get = new HttpGet(DispatcherTest.FOR_DISPATCH_URL);
 
         CloseableHttpResponse response = client.execute(host, get);
-        InputStream in = response.getEntity().getContent();
-        StringBuilder sb = new StringBuilder();
-        int c;
-        while ((c = in.read()) >= 0) {
-            sb.append((char) c);
-        }
-        String responseBody = sb.toString();
+        String responseBody = EntityUtils.toString(response.getEntity());
 
         assertEquals("Path not dispatched", responseBody.contains("Test dispatch"), true);
     }

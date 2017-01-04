@@ -1,13 +1,16 @@
 package ru.ifmo.server;
 
 /**
- * Created by vadim on 02.01.17.
+ * Test dispatcher. Change const path to path with test handler
  */
-public class DispatcherTest implements Dispatcher{
+class DispatcherTest implements Dispatcher{
+    static final String FOR_DISPATCH_URL = "/for_dispatch";
+    static final String DISPATCHED_URL = "/dispatched";
+
     @Override
     public String dispatch(Request request, Response response) {
-        if (request.getPath().equals("/for_dispatch"))
-            return "/dispatched";
+        if (request.getPath().equals(FOR_DISPATCH_URL))
+            return DISPATCHED_URL;
 
         return request.getPath();
     }
