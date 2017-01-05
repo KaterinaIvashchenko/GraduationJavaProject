@@ -31,6 +31,7 @@ public class ServerTest {
     private static final HttpHost host = new HttpHost("localhost", ServerConfig.DFLT_PORT);
 
     private static final String SUCCESS_URL = "/test_success";
+    private static final String SUCCESS_URL_NEW = "/test_success_new";
     private static final String NOT_FOUND_URL = "/test_not_found";
     private static final String SERVER_ERROR_URL = "/test_fail";
     private static final String TEXT_PLAIN_URL = "/test_text_plain";
@@ -42,6 +43,7 @@ public class ServerTest {
     public static void initialize() {
         ServerConfig cfg = new ServerConfig()
                 .addHandler(SUCCESS_URL, new SuccessHandler())
+                .addHandler(SUCCESS_URL_NEW, new SuccessHandlerNew())
                 .addHandler(SERVER_ERROR_URL, new FailHandler())
                 .addHandler(TEXT_PLAIN_URL, new TextPlainHandler())
                 .addHandler(SERVER_ERROR_URL, new FailHandler())
@@ -281,4 +283,38 @@ public class ServerTest {
 
         assertStatusCode(HttpStatus.SC_BAD_REQUEST, response);
     }
+
+    @Test
+    public void testStatusCode() throws Exception {
+        HttpGet get = new HttpGet(SUCCESS_URL_NEW);
+
+        CloseableHttpResponse response = client.execute(host, get);
+
+        assertStatusCode(HttpStatus.SC_OK, response);
+    }
+
+    @Test
+    public void testSuccessNew() throws Exception {
+        // TODO test headers
+        URI uri = new URIBuilder(SUCCESS_URL_NEW)
+                .addParameter("1", "1")
+                .addParameter("2", "2")
+                .addParameter("testArg1", "testValue1")
+                .addParameter("testArg2", "2")
+                .addParameter("testArg3", "testVal3")
+                .addParameter("testArg4", "")
+                .build();
+
+        HttpGet get = new HttpGet(uri);
+
+        CloseableHttpResponse response = client.execute(host, get);
+
+        assertStatusCode(HttpStatus.SC_OK, response);
+        assertEquals(SuccessHandler.TEST_RESPONSE +
+                        "<br>{1=1, 2=2, testArg1=testValue1, testArg2=2, testArg3=testVal3, testArg4=null}" +
+                        SuccessHandler.CLOSE_HTML,
+                EntityUtils.toString(response.getEntity()));
+    }
+
+
 }

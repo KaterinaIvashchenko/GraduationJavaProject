@@ -12,6 +12,16 @@ public class Http {
     public static final int SC_NOT_FOUND = 404;
     public static final int SC_SERVER_ERROR = 500;
     public static final int SC_NOT_IMPLEMENTED = 501;
+    public static String[] statusNames = new String[600];
+    static {
+        statusNames[SC_CONTINUE] = "Continue";
+        statusNames[SC_OK] = "OK";
+        statusNames[SC_MULTIPLE_CHOICES] = "Multiple Choise";
+        statusNames[SC_BAD_REQUEST] = "Bad Request";
+        statusNames[SC_NOT_FOUND] = "Not Found";
+        statusNames[SC_SERVER_ERROR] = "Internal Server Error";
+        statusNames[SC_NOT_IMPLEMENTED] = "Not Implemented";
+    }
 
     // Header names
     public static final String HEADER_NAME_CONTENT_TYPE = "Content-Type";

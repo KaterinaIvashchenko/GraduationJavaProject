@@ -1,18 +1,19 @@
 package ru.ifmo.server;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.Writer;
+import java.io.*;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.Map;
+
+import static ru.ifmo.server.Http.statusNames;
 
 /**
  * Provides {@link java.io.OutputStream} ro respond to client.
  */
 public class Response {
     final Socket socket;
+    private int statusCode;
+    private ByteArrayOutputStream bufferOutputStream= new ByteArrayOutputStream();
 
     Response(Socket socket) {
         this.socket = socket;
@@ -22,7 +23,16 @@ public class Response {
      * Forces any content in the buffer to be written to the client
      */
     public void flushBuffer() {
+        if (statusCode==0)
+            throw new ServerException("Not set http status code");
 
+        try {
+            socket.getOutputStream().write(("HTTP/1.0 "+statusCode+" "+statusNames[statusCode]+"\r\n\r\n").getBytes());
+            socket.getOutputStream().write(bufferOutputStream.toByteArray());
+            socket.getOutputStream().flush();
+        } catch (IOException e) {
+            throw new ServerException("Cannot get output stream", e);
+        }
     }
 
     /**
@@ -42,6 +52,11 @@ public class Response {
      * @param data byte array to set body response
      */
     public void setBody(byte[] data) {
+        try {
+            bufferOutputStream.write(data);
+        } catch (IOException e) {
+            throw new ServerException("Cannot get output stream", e);
+        }
     }
 
     /**
@@ -51,11 +66,7 @@ public class Response {
      * @throws ServerException  if an output exception occurred
      */
     public PrintWriter getWriter() {
-        try {
-            return new PrintWriter(socket.getOutputStream());
-        } catch (IOException e) {
-            throw new ServerException("Cannot get output stream", e);
-        }
+        return new PrintWriter(bufferOutputStream);
     }
 
     /**
@@ -64,7 +75,6 @@ public class Response {
      * @param value String value header
      */
     public void setHeader(String name, String value) {
-
     }
 
     /**
@@ -72,7 +82,14 @@ public class Response {
      * @param headers map name and value
      */
     public void setHeaders (Map<String, String> headers) {
+    }
 
+    /**
+     * get map http headers with name and value
+     * @return Map<String, String> headers
+     */
+    public Map<String, String> getHeaders() {
+        return Collections.emptyMap();
     }
 
     /**
@@ -80,7 +97,10 @@ public class Response {
      * @param code method takes an int (the status code) as an argument.
      */
     public void setStatusCode (int code) {
-
+        if ( (code<100)||(code>505)  ){
+            throw new ServerException("Not valid http status code:" + code);
+        }
+        statusCode = code;
     }
 
     /**
