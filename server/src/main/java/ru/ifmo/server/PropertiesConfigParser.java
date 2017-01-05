@@ -3,6 +3,8 @@ package ru.ifmo.server;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Properties;
 
@@ -37,6 +39,35 @@ public class PropertiesConfigParser implements ConfigParser {
             String key = keys.nextElement(); // handlers
 
             String val = (String) prop.get(key); // /index=ru.ifmo.IndexHandler , /login=ru.ifmo.LoginHandler
+
+            String setterName = key;
+            char letter = setterName.charAt(0);
+            letter = Character.toUpperCase(letter);
+            setterName = setterName.substring(1);
+            setterName = "set" + letter + setterName;
+
+            Method[] methods = ServerConfig.class.getDeclaredMethods();
+            for (Method method : methods) {
+                String name = method.getName();
+
+                if (setterName.equals(name)) {
+                    Class<?>[] params = method.getParameterTypes();
+
+                    for (Class<?> param : params) {
+                        if (int.class == param) {
+                        }
+                    }
+
+                    try {
+                        method.invoke(config, Integer.parseInt(val));
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
 
             if ("port".equals(key)) {
                 config.setPort(Integer.parseInt(val));
