@@ -52,17 +52,16 @@ public class PropertiesConfigParser implements ConfigParser {
 
                     String[] split = route.split("=");
 
-                    Class<? extends Handler> cls;
-
                     try {
-                        cls = (Class<? extends Handler>) Class.forName(split[1]);
-                    }
-                    catch (ClassNotFoundException e) {
+                        Handler handler = (Handler) Class.forName(split[1]).newInstance();
+                        config.addHandler(split[0], handler);
+                    } catch (InstantiationException e) {
+                        e.printStackTrace();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (ClassNotFoundException e) {
                         throw new ServerException("Cannot load object for handler " + split[1], e);
                     }
-
-                    config.addHandlerClass(split[0], cls);
-
                 }
             }
         }
