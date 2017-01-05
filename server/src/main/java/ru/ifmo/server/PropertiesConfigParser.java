@@ -3,6 +3,7 @@ package ru.ifmo.server;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Properties;
 
@@ -37,6 +38,12 @@ public class PropertiesConfigParser implements ConfigParser {
             String key = keys.nextElement(); // handlers
 
             String val = (String) prop.get(key); // /index=ru.ifmo.IndexHandler , /login=ru.ifmo.LoginHandler
+
+            Method[] methods = ServerConfig.class.getDeclaredMethods();
+            for (Method method : methods) {
+                String name = method.getName();
+
+            }
 
             if ("port".equals(key)) {
                 config.setPort(Integer.parseInt(val));
