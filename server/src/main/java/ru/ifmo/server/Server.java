@@ -15,17 +15,17 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static ru.ifmo.server.util.Utils.htmlMessage;
 import static ru.ifmo.server.Http.*;
+import static ru.ifmo.server.util.Utils.htmlMessage;
 
 /**
  * Ifmo Web Server.
  * <p>
- *     To start server use {@link #start(ServerConfig)} and register at least
- *     one handler to process HTTP requests.
- *     Usage example:
- *     <pre>
- *{@code
+ * To start server use {@link #start(ServerConfig)} and register at least
+ * one handler to process HTTP requests.
+ * Usage example:
+ * <pre>
+ * {@code
  * ServerConfig config = new ServerConfig()
  *      .addHandler("/index", new Handler() {
  *          public void handle(Request request, Response response) throws Exception {
@@ -40,8 +40,9 @@ import static ru.ifmo.server.Http.*;
  *     </pre>
  * </p>
  * <p>
- *     To stop the server use {@link #stop()} or {@link #close()} methods.
+ * To stop the server use {@link #stop()} or {@link #close()} methods.
  * </p>
+ *
  * @see ServerConfig
  */
 public class Server implements Closeable {
@@ -90,8 +91,7 @@ public class Server implements Closeable {
 
             LOG.info("Server started on port: {}", config.getPort());
             return server;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new ServerException("Cannot start server on port: " + config.getPort());
         }
     }
@@ -111,31 +111,13 @@ public class Server implements Closeable {
      */
     public void stop() {
         acceptorPool.shutdownNow();
+        multiThreadedPool.shutdownNow();
         Utils.closeQuiet(socket);
 
         socket = null;
     }
-    private class NewConnection implements Runnable {
-        Socket sock;
-        NewConnection(Socket sock) {
-            this.sock = sock;
-        }
 
-        @Override
-        public void run() {
-            try {
-                processConnection(sock);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    sock.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
+
     private void processConnection(Socket sock) throws IOException {
         if (LOG.isDebugEnabled())
             LOG.debug("Accepting connection on: {}", sock);
@@ -147,8 +129,7 @@ public class Server implements Closeable {
 
             if (LOG.isDebugEnabled())
                 LOG.debug("Parsed request: {}", req);
-        }
-        catch (URISyntaxException e) {
+        } catch (URISyntaxException e) {
             if (LOG.isDebugEnabled())
                 LOG.error("Malformed URL", e);
 
@@ -156,8 +137,7 @@ public class Server implements Closeable {
                     sock.getOutputStream());
 
             return;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error parsing request", e);
 
             respond(SC_SERVER_ERROR, "Server Error", htmlMessage(SC_SERVER_ERROR + " Server error"),
@@ -179,16 +159,14 @@ public class Server implements Closeable {
         if (handler != null) {
             try {
                 handler.handle(req, resp);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 if (LOG.isDebugEnabled())
                     LOG.error("Server error:", e);
 
                 respond(SC_SERVER_ERROR, "Server Error", htmlMessage(SC_SERVER_ERROR + " Server error"),
                         sock.getOutputStream());
             }
-        }
-        else
+        } else
             respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
                     sock.getOutputStream());
     }
@@ -246,8 +224,7 @@ public class Server implements Closeable {
                     key = query.substring(start, i);
 
                     start = i + 1;
-                }
-                else if (key != null && (query.charAt(i) == AMP || last)) {
+                } else if (key != null && (query.charAt(i) == AMP || last)) {
                     req.addArgument(key, query.substring(start, last ? i + 1 : i));
 
                     key = null;
@@ -322,27 +299,51 @@ public class Server implements Closeable {
     private class ConnectionHandler implements Runnable {
         public void run() {
             multiThreadedPool = Executors.newCachedThreadPool();
+
             while (!Thread.currentThread().isInterrupted()) {
-//                try {
-//                    Socket sock = socket.accept();
-//                    sock.setSoTimeout(config.getSocketTimeout());
-//                    processPool.submit(new ProcessConnection(sock));
-
-                    try (Socket sock = socket.accept()) {
-
+                try {
+                    Socket sock = socket.accept();
                     sock.setSoTimeout(config.getSocketTimeout());
+                    multiThreadedPool.submit(new NewConnection(sock));
 
-                    Socket tmpSock = new Socket(sock.getInetAddress(), sock.getLocalPort());
-
-                    multiThreadedPool.submit(new NewConnection(tmpSock));
-
-                    }
-                catch (Exception e) {
+                } catch (Exception e) {
                     if (!Thread.currentThread().isInterrupted())
                         LOG.error("Error accepting connection", e);
                 }
             }
 
+        }
+    }
+
+    private class NewConnection implements Runnable {
+        Socket sock;
+
+        NewConnection(Socket sock) {
+            this.sock = sock;
+        }
+
+        @Override
+        public void run() {
+
+            while (!Thread.currentThread().isInterrupted()) {
+
+                try {
+                    processConnection(sock);
+                } catch (IOException e) {
+                    LOG.error("Error input / output during data transfer", e);
+
+
+                } finally {
+                    try {
+                        sock.close();
+                        Thread.currentThread().interrupt();
+                    } catch (IOException e) {
+                        if (!Thread.currentThread().isInterrupted())
+                            LOG.error("Error accepting connection", e);
+                        LOG.error("Error closing the socket", e);
+                    }
+                }
+            }
         }
     }
 }
