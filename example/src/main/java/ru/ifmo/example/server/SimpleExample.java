@@ -3,6 +3,7 @@ package ru.ifmo.example.server;
 import ru.ifmo.server.*;
 
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -13,21 +14,13 @@ import java.util.Map;
  */
 public class SimpleExample {
     public static void main(String[] args) throws URISyntaxException, IOException {
-        Handler printHandler = new InfoHandler();
-
-        // Define config with request handlers
-        ServerConfig config = new ServerConfig()
-                .addHandler("/info.html", printHandler)
-                .addHandler("/info", printHandler);
-
-        config.setPort(8081);
 
         // Start server
         @SuppressWarnings("unused")
-        Server server = Server.start(config);
+        Server server = Server.start(new File("/Users/katerina/Documents/ITMOAllUsers/server/src/test/resources/web-server.properties"));
 
         // And open it!
-        String infoPage = "http://localhost:" + ServerConfig.DFLT_PORT + "/info.html";
+        String infoPage = "http://localhost:" + 8081 + "/info.html";
 
         if (Desktop.isDesktopSupported()) {
             Desktop.getDesktop().browse(new URI(infoPage));
@@ -37,7 +30,7 @@ public class SimpleExample {
 
     }
 
-    private static class InfoHandler implements Handler {
+    public static class InfoHandler implements Handler {
         @Override
         public void handle(Request request, Response response) throws Exception {
             // Set correct header

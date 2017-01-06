@@ -61,6 +61,10 @@ public class Server implements Closeable {
         this.config = new ServerConfig(config);
     }
 
+    public static Server start() {
+        return start(new ConfigLoader().load());
+    }
+
     public static Server start(File file) {
         return start(new ConfigLoader().load(file));
     }
