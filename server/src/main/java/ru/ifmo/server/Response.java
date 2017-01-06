@@ -1,8 +1,11 @@
 package ru.ifmo.server;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import static ru.ifmo.server.Http.statusNames;
@@ -14,6 +17,8 @@ public class Response {
     final Socket socket;
     private int statusCode;
     private ByteArrayOutputStream bufferOutputStream= new ByteArrayOutputStream();
+    private PrintWriter printWriter;
+    private Map<String,String> headers = new HashMap<>();
 
     Response(Socket socket) {
         this.socket = socket;
@@ -27,9 +32,20 @@ public class Response {
             throw new ServerException("Not set http status code");
 
         try {
-            socket.getOutputStream().write(("HTTP/1.0 "+statusCode+" "+statusNames[statusCode]+"\r\n\r\n").getBytes());
-            socket.getOutputStream().write(bufferOutputStream.toByteArray());
-            socket.getOutputStream().flush();
+            if (printWriter!=null)
+                printWriter.flush();
+            bufferOutputStream.flush();
+            if (this.headers.get("Content-Length")==null)
+                this.setHeader("Content-Length", String.valueOf(bufferOutputStream.size()));
+
+            OutputStream out = socket.getOutputStream();
+            out.write(("HTTP/1.0 "+statusCode+" "+statusNames[statusCode]+"\r\n").getBytes());
+            for (String key:headers.keySet()) {
+                out.write((key+": "+headers.get(key)+"\r\n").getBytes());
+            }
+            out.write("\r\n".getBytes());
+            out.write(bufferOutputStream.toByteArray());
+            out.flush();
         } catch (IOException e) {
             throw new ServerException("Cannot get output stream", e);
         }
@@ -38,6 +54,7 @@ public class Response {
     /**
      * @return {@link OutputStream} connected to the client.
      */
+    @Deprecated
     public OutputStream getOutputStream() {
         try {
             return socket.getOutputStream();
@@ -45,6 +62,14 @@ public class Response {
         catch (IOException e) {
             throw new ServerException("Cannot get output stream", e);
         }
+    }
+
+    /**
+     * Returns a buffered OutputStream suitable for writing binary data in the response. Need send responseto client exec method FlushBuffer
+     * @return buffered OutputStream
+     */
+    public OutputStream getOutputStreamBuffer() {
+        return bufferOutputStream;
     }
 
     /**
@@ -61,20 +86,26 @@ public class Response {
 
     /**
      * Returns a PrintWriter object that can send character text to the client.
-     Calling flush() on the PrintWriter commits the response.
+     flush() calling automatically on time flushBuffer()
      * @return {@link PrintWriter}
      * @throws ServerException  if an output exception occurred
      */
     public PrintWriter getWriter() {
-        return new PrintWriter(bufferOutputStream);
+        printWriter = new PrintWriter(bufferOutputStream);
+        return printWriter;
     }
 
     /**
-     * Adds a http response header with the given name and value
+     * Adds a http response header with the given name and value. Header Content-Length set automatically when flushBuffer
      * @param name name header
      * @param value String value header
      */
     public void setHeader(String name, String value) {
+        if (this.headers.get(name)!=null)
+            this.headers.replace(name,value);
+        else {
+            this.headers.put(name,value);
+        }
     }
 
     /**
@@ -82,6 +113,7 @@ public class Response {
      * @param headers map name and value
      */
     public void setHeaders (Map<String, String> headers) {
+        this.headers.putAll(headers);
     }
 
     /**
@@ -89,7 +121,7 @@ public class Response {
      * @return Map<String, String> headers
      */
     public Map<String, String> getHeaders() {
-        return Collections.emptyMap();
+        return this.headers;
     }
 
     /**
@@ -108,19 +140,14 @@ public class Response {
      * @return int http status code
      */
     public int getStatusCode() {
-        return 0;
+        return statusCode;
     }
 
-/*
-+Response.setBody(byte[] data): void
-+Response.getWriter(): Writer
-Reponse.getOutputStream(): OutputStream // but it should not send directly to client
-+Response.setHeader(String name, String value): void
-Response.getHeaders(): Map<String, String>
-+Response.setHeaders(Map<String, String> headers): void
-+Response.setStatusCode(int code): void
-+Response.getStatusCode(): int
-*/
-
-
+    /**
+     * Set header Content-type with value
+     * @param value String value Internet Media Types
+     */
+    public void setContentType(String value) {
+        setHeader("Content-Type",value);
+    }
 }

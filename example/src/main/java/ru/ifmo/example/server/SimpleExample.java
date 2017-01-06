@@ -47,8 +47,10 @@ public class SimpleExample {
             // Write some HTML
             sb.append("<html><body>");
 
+            sb.append("<p>http://localhost:8080/info.html").append("<br>");
             sb.append("<p>Requested address: ").append(request.getPath()).append("<br>");
             sb.append("<p>Request method: ").append(request.getMethod()).append("<br>");
+
 
             Map<String, String> args = request.getArguments();
 

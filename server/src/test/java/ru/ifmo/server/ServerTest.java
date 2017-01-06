@@ -20,9 +20,10 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static ru.ifmo.server.Http.*;
-import static ru.ifmo.server.TestUtils.*;
+import static ru.ifmo.server.TestUtils.assertStatusCode;
 
 /**
  * Tests main server functionality.
@@ -295,7 +296,6 @@ public class ServerTest {
 
     @Test
     public void testSuccessNew() throws Exception {
-        // TODO test headers
         URI uri = new URIBuilder(SUCCESS_URL_NEW)
                 .addParameter("1", "1")
                 .addParameter("2", "2")
@@ -314,6 +314,11 @@ public class ServerTest {
                         "<br>{1=1, 2=2, testArg1=testValue1, testArg2=2, testArg3=testVal3, testArg4=null}" +
                         SuccessHandler.CLOSE_HTML,
                 EntityUtils.toString(response.getEntity()));
+
+        //test response headers
+        assertEquals("Response not contains header Content-Length", response.containsHeader("Content-Length"),true);
+        assertEquals("Response not contains header Content-Type", response.containsHeader("Content-Type"),true);
+
     }
 
 

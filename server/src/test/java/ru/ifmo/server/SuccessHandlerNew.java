@@ -13,9 +13,9 @@ public class SuccessHandlerNew implements Handler{
 
     @Override
     public void handle(Request request, Response response) throws Exception {
+        response.setContentType("text/html");
         response.setStatusCode(SC_OK);
         response.setBody((TEST_RESPONSE + "<br>" + request.getArguments() + CLOSE_HTML).getBytes());
-
         response.flushBuffer();
     }
 }
