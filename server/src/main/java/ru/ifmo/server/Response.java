@@ -8,7 +8,10 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
+import static ru.ifmo.server.Http.SC_OK;
 import static ru.ifmo.server.Http.statusNames;
+import static ru.ifmo.server.Server.CRLF;
+import static ru.ifmo.server.Server.SPACE;
 
 /**
  * Provides {@link java.io.OutputStream} ro respond to client.
@@ -29,7 +32,7 @@ public class Response {
      */
     public void flushBuffer() {
         if (statusCode==0)
-            statusCode = Http.SC_OK;
+            statusCode = SC_OK;
 
         try {
             if (printWriter!=null)
@@ -39,11 +42,12 @@ public class Response {
                 this.setHeader("Content-Length", String.valueOf(bufferOutputStream.size()));
 
             OutputStream out = socket.getOutputStream();
-            out.write(("HTTP/1.0 "+statusCode+" "+statusNames[statusCode]+"\r\n").getBytes());
+            out.write(("HTTP/1.0" + SPACE + statusCode + SPACE + statusNames[statusCode] + CRLF).getBytes());
+
             for (String key:headers.keySet()) {
-                out.write((key+": "+headers.get(key)+"\r\n").getBytes());
+                out.write((key+":"+SPACE+headers.get(key) + CRLF).getBytes());
             }
-            out.write("\r\n".getBytes());
+            out.write(CRLF.getBytes());
             out.write(bufferOutputStream.toByteArray());
             out.flush();
         } catch (IOException e) {
