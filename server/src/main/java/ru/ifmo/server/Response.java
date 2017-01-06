@@ -29,7 +29,7 @@ public class Response {
      */
     public void flushBuffer() {
         if (statusCode==0)
-            throw new ServerException("Not set http status code");
+            statusCode = Http.SC_OK;
 
         try {
             if (printWriter!=null)
