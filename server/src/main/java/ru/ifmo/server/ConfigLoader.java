@@ -1,6 +1,7 @@
 package ru.ifmo.server;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Universal config file parser
@@ -10,12 +11,23 @@ public class ConfigLoader {
 
     public ServerConfig load(File file) {
 
-        return getParser(file).parse();
+        try {
+            return getParser(file).parse();
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new ServerException("Can't parse config");
+        }
     }
 
-    public ServerConfig load(){
+    public ServerConfig load() {
         File prop = new File(getClass().getClassLoader().getResource("web-server.properties").getFile());
-        return getParser(prop).parse();
+
+        //Где нужно искать файл пропертис или xml? В файловой системе или в ресурсах?
+
+        try {
+            return getParser(prop).parse();
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new ServerException("Can't parse config");
+        }
     }
 
     public ConfigParser getParser(File file) {

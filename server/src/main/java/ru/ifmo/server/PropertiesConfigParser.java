@@ -19,7 +19,7 @@ public class PropertiesConfigParser implements ConfigParser {
     }
 
     @Override
-    public ServerConfig parse() {
+    public ServerConfig parse() throws IllegalAccessException, InvocationTargetException {
 
         Properties prop = new Properties();
 
@@ -71,57 +71,64 @@ public class PropertiesConfigParser implements ConfigParser {
 
                         assert params.length == 1;
 
+                        //Избыточность кода зашкаливает. Чем можно навести красоту?
+
                         if (int.class == params[0]) {
                             int valConverted = Integer.parseInt(val);
+                            method.invoke(config, valConverted);
 
                         } else if (Integer.class == params[0]) {
                             Integer valConverted = Integer.parseInt(val);
+                            method.invoke(config, valConverted);
 
                         } else if (Short.class == params[0]) {
                             Short valConverted = Short.parseShort(val);
+                            method.invoke(config, valConverted);
                         } else if (short.class == params[0]) {
                             short valConverted = Short.parseShort(val);
+                            method.invoke(config, valConverted);
 
                         } else if (Long.class == params[0]) {
                             Long valConverted = Long.parseLong(val);
+                            method.invoke(config, valConverted);
                         } else if (long.class == params[0]) {
                             long valConverted = Long.parseLong(val);
+                            method.invoke(config, valConverted);
 
                         } else if (Double.class == params[0]) {
                             Double valConverted = Double.parseDouble(val);
+                            method.invoke(config, valConverted);
                         } else if (double.class == params[0]) {
                             double valConverted = Double.parseDouble(val);
+                            method.invoke(config, valConverted);
 
                         } else if (Float.class == params[0]) {
                             Float valConverted = Float.parseFloat(val);
+                            method.invoke(config, valConverted);
                         } else if (float.class == params[0]) {
                             float valConverted = Float.parseFloat(val);
+                            method.invoke(config, valConverted);
 
                         } else if (Character.class == params[0]) {
                             Character valConverted = val.charAt(0);
+                            method.invoke(config, valConverted);
                         } else if (char.class == params[0]) {
                             char valConverted = val.charAt(0);
+                            method.invoke(config, valConverted);
 
                         } else if (Boolean.class == params[0]) {
                             Boolean valConverted = Boolean.parseBoolean(val);
+                            method.invoke(config, valConverted);
                         } else if (boolean.class == params[0]) {
                             boolean valConverted = Boolean.parseBoolean(val);
+                            method.invoke(config, valConverted);
 
                         } else if (Byte.class == params[0]) {
                             Byte valConverted = Byte.parseByte(val);
+                            method.invoke(config, valConverted);
                         } else if (byte.class == params[0]) {
                             byte valConverted = Byte.parseByte(val);
-
-                            /** Необходимо разобраться, как элегантно оборачивать каждый method.invoke трайкэчем
-                            с одними и теми же эксепшинами для всех прим. типов данных и их оберток!
-
-                            try {
-                                method.invoke(config, valConverted);
-                            } catch (IllegalAccessException | InvocationTargetException e) {
-                                e.printStackTrace();
-                            }
-
-                            */
+                            method.invoke(config, valConverted);
 
                         } else {
 
