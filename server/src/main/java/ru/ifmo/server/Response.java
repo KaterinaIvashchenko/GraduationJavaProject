@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static ru.ifmo.server.Http.SC_OK;
@@ -19,9 +20,9 @@ import static ru.ifmo.server.Server.SPACE;
 public class Response {
     final Socket socket;
     private int statusCode;
-    private ByteArrayOutputStream bufferOutputStream= new ByteArrayOutputStream();
+    private ByteArrayOutputStream bufferOutputStream;
     private PrintWriter printWriter;
-    private Map<String,String> headers = new HashMap<>();
+    private Map<String,String> headers;
 
     Response(Socket socket) {
         this.socket = socket;
@@ -73,6 +74,9 @@ public class Response {
      * @return buffered OutputStream
      */
     public OutputStream getOutputStreamBuffer() {
+        if (bufferOutputStream==null)
+            bufferOutputStream = new ByteArrayOutputStream();
+
         return bufferOutputStream;
     }
 
@@ -82,7 +86,7 @@ public class Response {
      */
     public void setBody(byte[] data) {
         try {
-            bufferOutputStream.write(data);
+            getOutputStreamBuffer().write(data);
         } catch (IOException e) {
             throw new ServerException("Cannot get output stream", e);
         }
@@ -90,12 +94,13 @@ public class Response {
 
     /**
      * Returns a PrintWriter object that can send character text to the client.
-     flush() calling automatically on time flushBuffer()
+     flush() calling automatically on flushBuffer()
      * @return {@link PrintWriter}
      * @throws ServerException  if an output exception occurred
      */
     public PrintWriter getWriter() {
-        printWriter = new PrintWriter(bufferOutputStream);
+        if (printWriter==null)
+            printWriter = new PrintWriter(getOutputStreamBuffer());
         return printWriter;
     }
 
@@ -105,11 +110,10 @@ public class Response {
      * @param value String value header
      */
     public void setHeader(String name, String value) {
-        if (this.headers.get(name)!=null)
-            this.headers.replace(name,value);
-        else {
-            this.headers.put(name,value);
-        }
+        if (this.headers==null)
+            this.headers = new LinkedHashMap<>();
+
+        this.headers.put(name,value);
     }
 
     /**
@@ -117,6 +121,9 @@ public class Response {
      * @param headers map name and value
      */
     public void setHeaders (Map<String, String> headers) {
+        if (this.headers==null)
+            this.headers = new LinkedHashMap<>();
+
         this.headers.putAll(headers);
     }
 
@@ -125,7 +132,10 @@ public class Response {
      * @return Map<String, String> headers
      */
     public Map<String, String> getHeaders() {
-        return this.headers;
+        if (this.headers == null)
+            return Collections.emptyMap();
+
+        return Collections.unmodifiableMap(this.headers);
     }
 
     /**

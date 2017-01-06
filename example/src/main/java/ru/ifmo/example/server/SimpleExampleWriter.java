@@ -39,6 +39,7 @@ public class SimpleExampleWriter {
     private static class InfoHandler implements Handler {
         @Override
         public void handle(Request request, Response response) throws Exception {
+            response.setContentType("text/html");
 
             PrintWriter pw = response.getWriter();
 
