@@ -168,10 +168,16 @@ public class ServerConfig {
         try {
             String name = scanClass.getName();
             Class<?> cls = Class.forName(name);
+            boolean validParameters = false;
 
             for (Method method : cls.getDeclaredMethods()) {
-                URL an = method.getAnnotation(URL.class);
+                Class<?>[] params = method.getParameterTypes();
+                if (params[0].equals(Request.class) && params[1].equals(Response.class))
+                        validParameters = true;
 
+                if (!validParameters) continue;
+
+                URL an = method.getAnnotation(URL.class);
                 if (an != null) {
                     Modifier.isPublic(method.getModifiers());
                     String path = an.value();

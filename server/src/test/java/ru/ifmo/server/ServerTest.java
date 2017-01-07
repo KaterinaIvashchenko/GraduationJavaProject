@@ -379,4 +379,12 @@ public class ServerTest {
         assertStatusCode(HttpStatus.SC_BAD_REQUEST, response);
     }
 
+    @Test
+    public void testScanClassInvalidClassMethod() throws IOException, URISyntaxException {
+        URI uri = new URI("/scan/class/method/error");
+        HttpGet get = new HttpGet(uri);
+        CloseableHttpResponse response = client.execute(host, get);
+
+        assertStatusCode(HttpStatus.SC_BAD_REQUEST, response);
+    }
 }
