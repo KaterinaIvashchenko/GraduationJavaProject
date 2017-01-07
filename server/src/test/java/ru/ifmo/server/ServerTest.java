@@ -323,16 +323,60 @@ public class ServerTest {
     }
 
     @Test
-    public void testScanClass() throws IOException, URISyntaxException {
-        URI uri = new URI("/scan");
+    public void testScanClassGET() throws IOException, URISyntaxException {
+        URI uri = new URI("/scanGET");
         HttpGet get = new HttpGet(uri);
         CloseableHttpResponse response = client.execute(host, get);
 
         assertStatusCode(HttpStatus.SC_OK, response);
         assertEquals(SuccessHandler.TEST_RESPONSE +
-                        "<br>/scan" +
+                        "<br>/scanGET" +
                         SuccessHandler.CLOSE_HTML,
                 EntityUtils.toString(response.getEntity()));
+    }
+
+    @Test
+    public void testScanClassANY() throws IOException, URISyntaxException {
+        URI uri = new URI("/scanANY");
+        HttpGet get = new HttpGet(uri);
+        CloseableHttpResponse response = client.execute(host, get);
+
+        assertStatusCode(HttpStatus.SC_OK, response);
+        assertEquals(SuccessHandler.TEST_RESPONSE +
+                        "<br>/scanANY" +
+                        SuccessHandler.CLOSE_HTML,
+                EntityUtils.toString(response.getEntity()));
+    }
+
+    @Test
+    public void testScanClassGETorHEAD1() throws IOException, URISyntaxException {
+        URI uri = new URI("/scan/get");
+        HttpGet get = new HttpGet(uri);
+        CloseableHttpResponse response = client.execute(host, get);
+
+        assertStatusCode(HttpStatus.SC_OK, response);
+        assertEquals(SuccessHandler.TEST_RESPONSE +
+                        "<br>/scan/get" +
+                        SuccessHandler.CLOSE_HTML,
+                EntityUtils.toString(response.getEntity()));
+    }
+
+    @Test
+    public void testScanClassGETorHEAD2() throws IOException, URISyntaxException {
+        URI uri = new URI("/scan/head");
+        HttpHead head = new HttpHead(uri);
+        CloseableHttpResponse response = client.execute(host, head);
+
+        assertStatusCode(HttpStatus.SC_OK, response);
+    }
+
+    @Test
+    public void testScanClassInvalidMethod() throws IOException, URISyntaxException {
+        URI uri = new URI("/scan/error");
+        HttpHead head = new HttpHead(uri);
+        CloseableHttpResponse response = client.execute(host, head);
+
+        assertStatusCode(HttpStatus.SC_BAD_REQUEST, response);
     }
 
 }

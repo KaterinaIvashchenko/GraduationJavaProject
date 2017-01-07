@@ -2,6 +2,7 @@ package ru.ifmo.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.ifmo.server.annotation.URL;
 import ru.ifmo.server.util.Utils;
 
 import java.io.Closeable;
@@ -169,7 +170,23 @@ public class Server implements Closeable {
             }
         } else if (ref != null) {
             try {
-                ref.m.invoke(ref.obj, req, resp);
+                int count = 0;
+                URL an = ref.m.getAnnotation(URL.class);
+                if (an.methods()[0].equals(HttpMethod.ANY)) {
+                    ref.m.invoke(ref.obj, req, resp);
+                }
+                for (int i = 0; i < an.methods().length; i++) {
+                    if (req.method.equals(an.methods()[i])) {
+                        ref.m.invoke(ref.obj, req, resp);
+                        count++;
+                        break;
+                    }
+                }
+                if (count == 0) {
+                    respond(SC_BAD_REQUEST, "Bad Request", htmlMessage(SC_BAD_REQUEST + " The request \""
+                            + req.method + "\" has invalid method"), sock.getOutputStream());
+                }
+
             } catch (IllegalAccessException | InvocationTargetException e) {
                 if (LOG.isDebugEnabled())
                     LOG.error("Method invoke error:", e);
