@@ -39,7 +39,7 @@ public class Response {
             if (printWriter!=null)
                 printWriter.flush();
             bufferOutputStream.flush();
-            if (this.headers.get("Content-Length")==null)
+            if ((this.headers==null)||(this.headers.get("Content-Length")==null))
                 this.setHeader("Content-Length", String.valueOf(bufferOutputStream.size()));
 
             OutputStream out = socket.getOutputStream();
