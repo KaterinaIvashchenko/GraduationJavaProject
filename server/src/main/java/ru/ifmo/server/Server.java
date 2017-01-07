@@ -7,6 +7,7 @@ import ru.ifmo.server.util.Utils;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
@@ -155,6 +156,7 @@ public class Server implements Closeable {
         final String path = dispatcher != null ?  dispatcher.dispatch(req, resp) : req.getPath();
 
         Handler handler = config.handler(path);
+        ServerConfig.ReflectHandler ref = config.getReflectHandler(req.getPath());
 
         if (handler != null) {
             try {
@@ -165,8 +167,14 @@ public class Server implements Closeable {
                     LOG.error("Server error:", e);
                 respond(SC_SERVER_ERROR,htmlMessage(SC_SERVER_ERROR + " Server error"),resp);
             }
-        }
-        else
+        } else if (ref != null) {
+            try {
+                ref.m.invoke(ref.obj, req, resp);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                if (LOG.isDebugEnabled())
+                    LOG.error("Method invoke error:", e);
+            }
+        } else
             respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
                     sock.getOutputStream());
     }

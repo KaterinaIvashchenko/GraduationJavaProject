@@ -1,5 +1,11 @@
 package ru.ifmo.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.ifmo.server.annotation.URL;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,12 +18,15 @@ public class ServerConfig {
 
     private int port = DFLT_PORT;
     private Map<String, Handler> handlers;
+    private Map<String, ReflectHandler> classHandlers;
     private int socketTimeout;
     private Dispatcher dispatcher;
 
+    private static final Logger LOG = LoggerFactory.getLogger(ServerConfig.class);
 
     public ServerConfig() {
         handlers = new HashMap<>();
+        classHandlers = new HashMap<>();
     }
 
     public ServerConfig(ServerConfig config) {
@@ -25,6 +34,7 @@ public class ServerConfig {
 
         port = config.port;
         handlers = new HashMap<>(config.handlers);
+        classHandlers = new HashMap<>(config.classHandlers);
         socketTimeout = config.socketTimeout;
         dispatcher = config.dispatcher;
     }
@@ -117,6 +127,7 @@ public class ServerConfig {
         return "ServerConfig{" +
                 "port=" + port +
                 ", handlers=" + handlers +
+                ", classHandlers=" +classHandlers +
                 ", socketTimeout=" + socketTimeout +
                 ", dispatcher=" + dispatcher +
                 '}';
@@ -143,4 +154,41 @@ public class ServerConfig {
         return dispatcher;
     }
 
+    class ReflectHandler {
+        Method m;
+        Object obj;
+
+        public ReflectHandler(Object obj, Method m) {
+            this.m = m;
+            this.obj = obj;
+        }
+    }
+
+    public ServerConfig addScanClass (Class scanClass) {
+        try {
+            String name = scanClass.getName();
+            Class<?> cls = Class.forName(name);
+
+            for (Method method : cls.getDeclaredMethods()) {
+                URL an = method.getAnnotation(URL.class);
+
+                if (an != null) {
+                    Modifier.isPublic(method.getModifiers());
+                    String path = an.value();
+                    ReflectHandler reflectHandler = new ReflectHandler(cls.newInstance(), method);
+                    classHandlers.put(path, reflectHandler);
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            if (LOG.isDebugEnabled())
+                LOG.error("Class not found:" + scanClass, e);
+        } catch (IllegalAccessException | InstantiationException e) {
+            e.printStackTrace();
+        }
+        return this;
+    }
+
+    ReflectHandler getReflectHandler (String path) {
+        return classHandlers.get(path);
+    }
 }

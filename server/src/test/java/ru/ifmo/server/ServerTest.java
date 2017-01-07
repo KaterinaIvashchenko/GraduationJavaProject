@@ -49,7 +49,8 @@ public class ServerTest {
                 .addHandler(TEXT_PLAIN_URL, new TextPlainHandler())
                 .addHandler(SERVER_ERROR_URL, new FailHandler())
                 .addHandler(DispatcherTest.DISPATCHED_URL,new DispatchHandler())
-                .setDispatcher(new DispatcherTest());
+                .setDispatcher(new DispatcherTest())
+                .addScanClass(ScanClassHandler.class);
 
         server = Server.start(cfg);
 
@@ -321,5 +322,17 @@ public class ServerTest {
 
     }
 
+    @Test
+    public void testScanClass() throws IOException, URISyntaxException {
+        URI uri = new URI("/scan");
+        HttpGet get = new HttpGet(uri);
+        CloseableHttpResponse response = client.execute(host, get);
+
+        assertStatusCode(HttpStatus.SC_OK, response);
+        assertEquals(SuccessHandler.TEST_RESPONSE +
+                        "<br>/scan" +
+                        SuccessHandler.CLOSE_HTML,
+                EntityUtils.toString(response.getEntity()));
+    }
 
 }
