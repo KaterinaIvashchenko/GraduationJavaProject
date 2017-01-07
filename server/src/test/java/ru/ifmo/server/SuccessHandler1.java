@@ -13,8 +13,9 @@ public class SuccessHandler1 implements Handler {
 
     @Override
     public void handle(Request request, Response response) throws Exception {
-        Thread.currentThread().sleep(10000);
+        Thread.currentThread().sleep(5000);
         response.getOutputStream().write((OK_HEADER + TEST_RESPONSE + CLOSE_HTML).getBytes());
         response.getOutputStream().flush();
+        multithreadingTest.incrementCountOfFinishersThreads();
     }
 }
