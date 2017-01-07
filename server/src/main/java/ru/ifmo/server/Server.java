@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static ru.ifmo.server.Http.*;
+import static ru.ifmo.server.util.Utils.closeQuiet;
 import static ru.ifmo.server.util.Utils.htmlMessage;
 
 /**
@@ -57,10 +58,10 @@ public class Server implements Closeable {
 
     private final ServerConfig config;
 
-    private ServerSocket socket;
+    private ServerSocket serverSocket;
 
     private ExecutorService acceptorPool;
-    private ExecutorService multiThreadedPool;
+    private ExecutorService connectionProcessingPool;
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
@@ -87,7 +88,7 @@ public class Server implements Closeable {
             Server server = new Server(config);
 
             server.openConnection();
-            server.startAcceptor();
+            server.startWorkers();
 
             LOG.info("Server started on port: {}", config.getPort());
             return server;
@@ -97,11 +98,12 @@ public class Server implements Closeable {
     }
 
     private void openConnection() throws IOException {
-        socket = new ServerSocket(config.getPort());
+        serverSocket = new ServerSocket(config.getPort());
     }
 
-    private void startAcceptor() {
+    private void startWorkers() {
         acceptorPool = Executors.newSingleThreadExecutor(new ServerThreadFactory("con-acceptor"));
+        connectionProcessingPool = Executors.newCachedThreadPool(new ServerThreadFactory("con-processor"));
 
         acceptorPool.submit(new ConnectionHandler());
     }
@@ -111,10 +113,10 @@ public class Server implements Closeable {
      */
     public void stop() {
         acceptorPool.shutdownNow();
-        multiThreadedPool.shutdownNow();
-        Utils.closeQuiet(socket);
+        connectionProcessingPool.shutdownNow();
+        Utils.closeQuiet(serverSocket);
 
-        socket = null;
+        serverSocket = null;
     }
 
 
@@ -298,14 +300,12 @@ public class Server implements Closeable {
 
     private class ConnectionHandler implements Runnable {
         public void run() {
-            multiThreadedPool = Executors.newCachedThreadPool();
-
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    Socket sock = socket.accept();
+                    Socket sock = serverSocket.accept();
                     sock.setSoTimeout(config.getSocketTimeout());
-                    multiThreadedPool.submit(new NewConnection(sock));
 
+                    connectionProcessingPool.submit(new RequestProcessor(sock));
                 } catch (Exception e) {
                     if (!Thread.currentThread().isInterrupted())
                         LOG.error("Error accepting connection", e);
@@ -315,34 +315,23 @@ public class Server implements Closeable {
         }
     }
 
-    private class NewConnection implements Runnable {
+    private class RequestProcessor implements Runnable {
         Socket sock;
 
-        NewConnection(Socket sock) {
+        RequestProcessor(Socket sock) {
             this.sock = sock;
         }
 
         @Override
         public void run() {
-
-            while (!Thread.currentThread().isInterrupted()) {
-
-                try {
-                    processConnection(sock);
-                } catch (IOException e) {
-                    LOG.error("Error input / output during data transfer", e);
-
-
-                } finally {
-                    try {
-                        sock.close();
-                        Thread.currentThread().interrupt();
-                    } catch (IOException e) {
-                        if (!Thread.currentThread().isInterrupted())
-                            LOG.error("Error accepting connection", e);
-                        LOG.error("Error closing the socket", e);
-                    }
-                }
+            try {
+                processConnection(sock);
+            }
+            catch (IOException e) {
+                LOG.error("Error input / output during data transfer", e);
+            }
+            finally {
+                closeQuiet(sock);
             }
         }
     }

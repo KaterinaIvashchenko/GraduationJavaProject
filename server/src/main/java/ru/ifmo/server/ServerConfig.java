@@ -1,7 +1,12 @@
 package ru.ifmo.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
+
 
 /**
  * Holds server configs: local port, handler mappings, etc.
@@ -13,6 +18,8 @@ public class ServerConfig {
     private int port = DFLT_PORT;
     private Map<String, Handler> handlers;
     private int socketTimeout;
+
+    private static final Logger LOG = LoggerFactory.getLogger(ServerConfig.class);
 
     public ServerConfig() {
         handlers = new HashMap<>();
@@ -66,6 +73,54 @@ public class ServerConfig {
      */
     public ServerConfig addHandlers(Map<String, Handler> handlers) {
         this.handlers.putAll(handlers);
+
+        return this;
+    }
+
+    public  ServerConfig addHandlerClass(String resource, Class<? extends Handler> hndCls){
+
+        Class cl = null;
+
+        try {
+            cl = Class.forName(String.valueOf(hndCls));
+        } catch (ClassNotFoundException e) {
+            LOG.error("Class not found, check Classpath", e);
+        }
+
+        Class[] interfaces = cl.getInterfaces();
+        String handler = "Handler";
+        boolean isHandler = false;
+        for(Class cInterface : interfaces) {
+            if (handler.equals(cInterface)) isHandler = true;
+        }
+
+        if (isHandler == false){
+            throw new ServerException("This class " + cl.getSimpleName() + " cannot be extends from Handler");
+        }
+
+        Constructor[] constructors = cl.getConstructors();
+        for (Constructor constructor : constructors) {
+            Class[] paramTypes = constructor.getParameterTypes();
+            for (Class paramType : paramTypes) {
+                System.out.print(paramType.getName() + " ");
+            }
+            System.out.println();
+        }
+
+
+
+        try {
+            addHandler(resource, hndCls.newInstance());
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+        return this;
+    }
+
+    public  ServerConfig addHandlerClasses(Map<String, Class<? extends Handler>> handlers){
 
         return this;
     }
