@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.net.URI;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_LENGTH;
 import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_TYPE;
