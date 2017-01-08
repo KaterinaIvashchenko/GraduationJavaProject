@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface URL {
-    HttpMethod[] methods();
+    HttpMethod[] methods() default {HttpMethod.ANY};
     String value();
 }

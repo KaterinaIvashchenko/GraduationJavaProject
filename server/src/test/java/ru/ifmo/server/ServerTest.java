@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -42,6 +43,9 @@ public class ServerTest {
 
     @BeforeClass
     public static void initialize() {
+        Collection<Class<?>> classes = new ArrayList<>();
+        classes.add(ScanClassHandler.class);
+
         ServerConfig cfg = new ServerConfig()
                 .addHandler(SUCCESS_URL, new SuccessHandler())
                 .addHandler(SUCCESS_URL_NEW, new SuccessHandlerNew())
@@ -50,7 +54,8 @@ public class ServerTest {
                 .addHandler(SERVER_ERROR_URL, new FailHandler())
                 .addHandler(DispatcherTest.DISPATCHED_URL,new DispatchHandler())
                 .setDispatcher(new DispatcherTest())
-                .addScanClass(ScanClassHandler.class);
+                .addClasses(classes);
+
 
         server = Server.start(cfg);
 
@@ -87,7 +92,6 @@ public class ServerTest {
                 .build();
 
         HttpGet get = new HttpGet(uri);
-
         CloseableHttpResponse response = client.execute(host, get);
 
         assertStatusCode(HttpStatus.SC_OK, response);
@@ -385,6 +389,6 @@ public class ServerTest {
         HttpGet get = new HttpGet(uri);
         CloseableHttpResponse response = client.execute(host, get);
 
-        assertStatusCode(HttpStatus.SC_BAD_REQUEST, response);
+        assertStatusCode(HttpStatus.SC_NOT_FOUND, response);
     }
 }

@@ -6,6 +6,8 @@ import ru.ifmo.server.annotation.URL;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +20,7 @@ public class ServerConfig {
 
     private int port = DFLT_PORT;
     private Map<String, Handler> handlers;
-    private Map<String, ReflectHandler> classHandlers;
+    private Collection<Class<?>> classes;
     private int socketTimeout;
     private Dispatcher dispatcher;
 
@@ -26,7 +28,7 @@ public class ServerConfig {
 
     public ServerConfig() {
         handlers = new HashMap<>();
-        classHandlers = new HashMap<>();
+        classes = new ArrayList<>();
     }
 
     public ServerConfig(ServerConfig config) {
@@ -34,7 +36,7 @@ public class ServerConfig {
 
         port = config.port;
         handlers = new HashMap<>(config.handlers);
-        classHandlers = new HashMap<>(config.classHandlers);
+        classes = new ArrayList<>(config.classes);
         socketTimeout = config.socketTimeout;
         dispatcher = config.dispatcher;
     }
@@ -122,12 +124,22 @@ public class ServerConfig {
         return this;
     }
 
+    public ServerConfig addClasses(Collection<Class<?>> classes) {
+        this.classes.addAll(classes);
+
+        return this;
+    }
+
+    public Collection<Class<?>> getClasses() {
+        return classes;
+    }
+
     @Override
     public String toString() {
         return "ServerConfig{" +
                 "port=" + port +
                 ", handlers=" + handlers +
-                ", classHandlers=" +classHandlers +
+                ", classes=" + classes +
                 ", socketTimeout=" + socketTimeout +
                 ", dispatcher=" + dispatcher +
                 '}';
@@ -152,49 +164,5 @@ public class ServerConfig {
      */
     public Dispatcher getDispatcher() {
         return dispatcher;
-    }
-
-    class ReflectHandler {
-        Method m;
-        Object obj;
-
-        public ReflectHandler(Object obj, Method m) {
-            this.m = m;
-            this.obj = obj;
-        }
-    }
-
-    public ServerConfig addScanClass (Class scanClass) {
-        try {
-            String name = scanClass.getName();
-            Class<?> cls = Class.forName(name);
-            boolean validParameters = false;
-
-            for (Method method : cls.getDeclaredMethods()) {
-                Class<?>[] params = method.getParameterTypes();
-                if (params[0].equals(Request.class) && params[1].equals(Response.class))
-                        validParameters = true;
-
-                if (!validParameters) continue;
-
-                URL an = method.getAnnotation(URL.class);
-                if (an != null) {
-                    Modifier.isPublic(method.getModifiers());
-                    String path = an.value();
-                    ReflectHandler reflectHandler = new ReflectHandler(cls.newInstance(), method);
-                    classHandlers.put(path, reflectHandler);
-                }
-            }
-        } catch (ClassNotFoundException e) {
-            if (LOG.isDebugEnabled())
-                LOG.error("Class not found:" + scanClass, e);
-        } catch (IllegalAccessException | InstantiationException e) {
-            e.printStackTrace();
-        }
-        return this;
-    }
-
-    ReflectHandler getReflectHandler (String path) {
-        return classHandlers.get(path);
     }
 }
