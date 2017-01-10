@@ -21,7 +21,38 @@ public class Response {
     private ByteArrayOutputStream bufferOutputStream;
     private PrintWriter printWriter;
     private Map<String, String> headers;
-    static List<String> cacheCookies;
+    private List<String> setCookies;
+
+    public void setCookie(Cookie cookie) {
+
+        if (setCookies == null) {
+            setCookies = new ArrayList<>();
+        }
+
+        StringBuilder cookieline = new StringBuilder();
+
+        cookieline.append(cookie.name + "=" + cookie.value);
+        if (cookie.maxage != null) cookieline.append(";MAX-AGE=" + cookie.maxage);
+        if (cookie.domain != null) cookieline.append(";DOMAIN=" + cookie.domain);
+        if (cookie.path != null) cookieline.append(";PATH=" + cookie.path);
+        cookieline.append(";");
+
+        setCookies.add(cookieline.toString());
+    }
+
+    public void resetCookie(String name) {
+
+        if (setCookies == null) {
+            setCookies = new ArrayList<>();
+        }
+
+        StringBuilder cookieline = new StringBuilder();
+
+        cookieline.append(name + "=" + null);
+        cookieline.append(";");
+
+        setCookies.add(cookieline.toString());
+    }
 
     Response(Socket socket) {
         this.socket = socket;
@@ -49,11 +80,11 @@ public class Response {
                 out.write((key + ":" + SPACE + headers.get(key) + CRLF).getBytes());
             }
 
-            if (cacheCookies != null) {
-                for (String cookie : cacheCookies) {
+            if (setCookies != null) {
+                for (String cookie : setCookies) {
                     out.write(("Set-Cookie:" + SPACE + cookie + CRLF).getBytes());
                 }
-                cacheCookies.clear();
+                setCookies.clear();
             }
 
             out.write(CRLF.getBytes());

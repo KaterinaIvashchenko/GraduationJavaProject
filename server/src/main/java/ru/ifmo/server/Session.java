@@ -18,6 +18,10 @@ public class Session {
         this.id = id;
     }
 
+    public void invalidate(){
+        Server.removeSession(id);
+    }
+
     @Override
     public String toString() {
         return "Session{" +
@@ -27,6 +31,10 @@ public class Session {
 
     private Map<String, Object> sessionData;
 
+    public Map<String, Object> getSessionData() {
+        return sessionData;
+    }
+
     public <T> void setParams(String key, T t) {
         if (sessionData == null)
             sessionData = new HashMap<>();
@@ -34,7 +42,10 @@ public class Session {
     }
 
     public <T> T getParams(String key) {
-        return (T) sessionData.get(key);
+        if (sessionData != null) {
+            return (T) sessionData.get(key);
+        } else return null;
+
     }
 
     public static String generateSID() {

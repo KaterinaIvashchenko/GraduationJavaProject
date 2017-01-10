@@ -22,6 +22,8 @@ public class Request {
     private RequestBody body;
     private Map<String, String> headers;
     private Map<String, String> args;
+    private List<Cookie> cookies;
+    private Session session;
 
     public Request(Socket socket) {
         this.socket = socket;
@@ -34,8 +36,7 @@ public class Request {
     public InputStream getInputStream() {
         try {
             return socket.getInputStream();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new ServerException("Unable retrieve input stream.", e);
         }
     }
@@ -96,6 +97,82 @@ public class Request {
             return Collections.emptyMap();
 
         return Collections.unmodifiableMap(args);
+    }
+
+    private List<Cookie> getCookies() {
+
+        if (getHeaders().get("Cookie") == null) {
+            return null;
+        }
+
+        if (cookies == null) {
+            cookies = new ArrayList<>();
+            String cookieline = getHeaders().get("Cookie");
+            String[] pairs = cookieline.split("; ");
+            for (int i = 0; i < pairs.length; i++) {
+                String pair = pairs[i];
+                String[] keyValue = pair.split("=");
+                cookies.add(new Cookie(keyValue[0], keyValue[1]));
+            }
+        }
+        return Collections.unmodifiableList(cookies);
+    }
+
+    public String getCookieValue(String cookiename) {
+
+        if (cookies == null) {
+            cookies = getCookies();
+        }
+
+        Map<String, String> cookieValues = new HashMap<>();
+
+        if (cookies != null) {
+            for (Cookie currentCookie : cookies) {
+                cookieValues.put(currentCookie.name, currentCookie.value);
+            }
+            return cookieValues.get(cookiename);
+        } else return null;
+    }
+
+    private Boolean containsCookie(String cookiename) {
+
+        Boolean flag = false;
+
+        if (cookies == null) {
+            cookies = getCookies();
+        }
+        if (cookies != null) {
+            for (Cookie currentCookie : cookies) {
+                if (currentCookie.name.equals("JSESSIONID")) {
+                    flag = true; }
+            }
+        }
+        return flag;
+    }
+
+
+    public Session getSession() {
+        if (!containsCookie("JSESSIONID")) {
+            session = new Session();
+            String uniqSid = Session.generateSID();
+            session.setId(uniqSid);
+            Server.setSessions(uniqSid, session);
+            System.out.println(getHeaders());
+        } else {
+            session = Server.getSessions().get(getCookieValue("JSESSIONID"));
+            if (session == null) {
+                session = getSession(true);
+            }
+        }
+        return session;
+    }
+
+    public Session getSession(Boolean create) {
+            session = new Session();
+            String uniqSid = Session.generateSID();
+            session.setId(uniqSid);
+            Server.setSessions(uniqSid, session);
+        return session;
     }
 
     @Override

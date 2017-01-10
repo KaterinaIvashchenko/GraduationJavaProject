@@ -10,6 +10,9 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -52,6 +55,8 @@ public class Server implements Closeable {
 
     private ServerSocket socket;
 
+    private static Map<String, Session> sessions = new HashMap<>();
+
     private ExecutorService acceptorPool;
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
@@ -59,6 +64,17 @@ public class Server implements Closeable {
     private Server(ServerConfig config) {
         this.config = new ServerConfig(config);
     }
+
+
+    public static Map<String, Session> getSessions() {
+        return sessions;
+    }
+
+    public static void setSessions(String key, Session session) {
+        Server.sessions.put(key, session);
+    }
+
+    public static void removeSession(String key) { Server.sessions.remove(key); }
 
     /**
      * Starts server according to config. If null passed
