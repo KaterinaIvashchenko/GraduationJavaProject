@@ -2,8 +2,7 @@ package ru.ifmo.example.server;
 
 import ru.ifmo.server.*;
 
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.PrintWriter;
 
 /**
  * Example for dispatch all reqest to one handler
@@ -20,9 +19,12 @@ public class DispatcherExample {
     private static class MicroserviceHandler implements Handler {
         @Override
         public void handle(Request request, Response response) throws Exception {
-            Writer writer = new OutputStreamWriter(response.getOutputStream());
-            writer.write(Http.OK_HEADER + "Welcome to microservice!");
-            writer.flush();
+            response.setStatusCode(Http.SC_OK);
+            response.setContentType("text/plain");
+
+            PrintWriter pw = response.getWriter();
+            pw.print("Welcome to microservice!");
+            response.flushBuffer();
         }
     }
 

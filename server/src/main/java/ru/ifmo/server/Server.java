@@ -46,8 +46,8 @@ import static ru.ifmo.server.Http.*;
 public class Server implements Closeable {
     private static final char LF = '\n';
     private static final char CR = '\r';
-    private static final String CRLF = "" + CR + LF;
-    private static final char SPACE = ' ';
+    public static final String CRLF = "" + CR + LF;
+    public static final char SPACE = ' ';
 
     private final ServerConfig config;
 
@@ -172,9 +172,7 @@ public class Server implements Closeable {
             catch (Exception e) {
                 if (LOG.isDebugEnabled())
                     LOG.error("Server error:", e);
-
-                respond(SC_SERVER_ERROR, "Server Error", htmlMessage(SC_SERVER_ERROR + " Server error"),
-                        sock.getOutputStream());
+                respond(SC_SERVER_ERROR,htmlMessage(SC_SERVER_ERROR + " Server error"),resp);
             }
         }
         else
@@ -185,6 +183,11 @@ public class Server implements Closeable {
     static void respond(int code, String statusMsg, String content, OutputStream out) throws IOException {
         out.write(("HTTP/1.0" + SPACE + code + SPACE + statusMsg + CRLF + CRLF + content).getBytes());
         out.flush();
+    }
+    static void respond(int code, String content, Response resp) throws IOException {
+        resp.setStatusCode(code);
+        resp.setBody(content.getBytes());
+        resp.flushBuffer();
     }
 
     /**

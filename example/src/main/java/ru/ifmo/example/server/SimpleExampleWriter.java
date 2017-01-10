@@ -4,6 +4,7 @@ import ru.ifmo.server.*;
 
 import java.awt.*;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -11,9 +12,8 @@ import java.util.Map;
 /**
  * Simple example that shows basic usage.
  */
-public class SimpleExample {
+public class SimpleExampleWriter {
     public static void main(String[] args) throws URISyntaxException, IOException {
-
         Handler printHandler = new InfoHandler();
 
         // Define config with request handlers
@@ -36,60 +36,69 @@ public class SimpleExample {
 
     }
 
-    public static class InfoHandler implements Handler {
+    private static class InfoHandler implements Handler {
         @Override
         public void handle(Request request, Response response) throws Exception {
-            // Set correct header
-            StringBuilder sb = new StringBuilder(Http.OK_HEADER);
+            response.setContentType("text/html");
+
+            PrintWriter pw = response.getWriter();
 
             // Set doctype
-            sb.append("<!DOCTYPE html>");
+            pw.println("<!DOCTYPE html>");
 
             // Write some HTML
-            sb.append("<html><body>");
+            pw.println("<html><body>");
 
-            sb.append("<p>http://localhost:8080/info.html").append("<br>");
-            sb.append("<p>Requested address: ").append(request.getPath()).append("<br>");
-            sb.append("<p>Request method: ").append(request.getMethod()).append("<br>");
+            pw.println("<p>http://localhost:8080/info.html");
+            pw.println("<br>");
+            pw.println("<p>Requested address: ");
+            pw.println(request.getPath());
+            pw.println("<br>");
+            pw.println("<p>Request method: ");
+            pw.println(request.getMethod());
+            pw.println("<br>");
 
 
             Map<String, String> args = request.getArguments();
 
             if (!args.isEmpty()) {
-                sb.append("<p><strong>Passed arguments:</strong><br>");
+                pw.println("<p><strong>Passed arguments:</strong><br>");
 
                 for (Map.Entry<String, String> entry : args.entrySet()) {
-                    sb.append("Key: ").append(entry.getKey());
-                    sb.append(", Value: ").append(entry.getValue());
-                    sb.append("<br>");
+                    pw.println("Key: ");
+                    pw.print(entry.getKey());
+                    pw.println(", Value: ");
+                    pw.print(entry.getValue());
+                    pw.println("<br>");
                 }
 
-                sb.append("</p>");
+                pw.println("</p>");
             }
 
             Map<String, String> headers = request.getHeaders();
 
             if (!headers.isEmpty()) {
-                sb.append("<p><strong>Passed headers:</strong><br>");
+                pw.println("<p><strong>Passed headers:</strong><br>");
 
                 for (Map.Entry<String, String> entry : headers.entrySet()) {
-                    sb.append("Key: ").append(entry.getKey());
-                    sb.append(", Value: ").append(entry.getValue());
-                    sb.append("<br>");
+                    pw.println("Key: ");
+                    pw.print(entry.getKey());
+                    pw.println(", Value: ");
+                    pw.print(entry.getValue());
+                    pw.println("<br>");
                 }
 
-                sb.append("</p>");
+                pw.println("</p>");
             }
 
-            sb.append(" <iframe width=\"420\" height=\"315\"\n" +
+            pw.println(" <iframe width=\"420\" height=\"315\"\n" +
                     "src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\">\n" +
                     "</iframe> ");
 
-            sb.append("</body></html>");
+            pw.println("</body></html>");
 
             // Write everything to output
-            response.getOutputStream().write(sb.toString().getBytes());
-            response.getOutputStream().flush();
+            response.flushBuffer();
         }
     }
 }
