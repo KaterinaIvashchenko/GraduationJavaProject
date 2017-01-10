@@ -131,14 +131,13 @@ public class Server implements Closeable {
         }
     }
 
-    private void addScanClasses(Collection<Class<?>> classes) {
+    public void addScanClasses(Collection<Class<?>> classes) {
         Collection<Class<?>> classList = new ArrayList<>(classes);
 
         for (Class<?> c : classList) {
             try {
                 String name = c.getName();
                 Class<?> cls = Class.forName(name);
-                boolean validMethod = false;
 
                 for (Method method : cls.getDeclaredMethods()) {
                     URL an = method.getAnnotation(URL.class);
@@ -146,33 +145,26 @@ public class Server implements Closeable {
                         Class<?>[] params = method.getParameterTypes();
                         Class<?> methodType = method.getReturnType();
 
-                        if (params.length == 2 && methodType.equals(void.class)) {
-                            if (params[0].equals(Request.class) && params[1].equals(Response.class))
-                                validMethod = true;
+                        if (params.length == 2 && methodType.equals(void.class) && Modifier.isPublic(method.getModifiers())) {
+                            if (params[0].equals(Request.class) && params[1].equals(Response.class)) {
+                                String path = an.value();
+
+                                HttpMethod[] rest = new HttpMethod[an.methods().length - 1];
+                                System.arraycopy(an.methods(), 1, rest, 0, rest.length);
+                                EnumSet<HttpMethod> set = EnumSet.of(an.methods()[0], rest);
+
+                                ReflectHandler reflectHandler = new ReflectHandler(cls.newInstance(), method, set);
+                                classHandlers.put(path, reflectHandler);
+                            }
                         } else {
-                            if (LOG.isDebugEnabled())
-                                LOG.debug("Method has invalid parameters and type:" + method);
+                                throw new ServerReflectException("Invalid method: " + method + '\n' + "Valid method:" + '\n' +
+                                    "void type" +'\n' + "public modifier" + '\n' + "2 parameters - (Request request, Response response)");
                         }
 
-                        if (validMethod) {
-                            Modifier.isPublic(method.getModifiers());
-                            String path = an.value();
-
-                            HttpMethod[] rest = new HttpMethod[an.methods().length - 1];
-                            System.arraycopy(an.methods(), 1, rest, 0, rest.length);
-                            EnumSet<HttpMethod> set = EnumSet.of(an.methods()[0], rest);
-
-                            ReflectHandler reflectHandler = new ReflectHandler(cls.newInstance(), method, set);
-                            classHandlers.put(path, reflectHandler);
-                            validMethod = false;
-                        }
                     }
                 }
-            } catch (ClassNotFoundException e) {
-                if (LOG.isDebugEnabled())
-                    LOG.error("Class not found:", e);
-            } catch (IllegalAccessException | InstantiationException e) {
-                LOG.error("Error creating new Instance", e);
+            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+                    throw new ServerReflectException("Reflection error" + e);
             }
         }
     }
@@ -187,10 +179,13 @@ public class Server implements Closeable {
         } catch (IllegalAccessException | InvocationTargetException e) {
             if (LOG.isDebugEnabled())
                 LOG.error("Error invoke method:" + rf.m, e);
+
+            respond(SC_SERVER_ERROR, "Server Error", htmlMessage(SC_SERVER_ERROR + " Server error"),
+                    sock.getOutputStream());
         }
         if (!isInvoked) {
-            respond(SC_BAD_REQUEST, "Bad Request", htmlMessage(SC_BAD_REQUEST + " The request \""
-                    + req.method + "\" has invalid Http method"), sock.getOutputStream());
+            respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
+                    sock.getOutputStream());
         }
     }
 

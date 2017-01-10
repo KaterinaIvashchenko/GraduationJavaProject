@@ -21,8 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static ru.ifmo.server.Http.*;
 import static ru.ifmo.server.TestUtils.assertStatusCode;
 
@@ -379,15 +378,6 @@ public class ServerTest {
         URI uri = new URI("/scan/error");
         HttpHead head = new HttpHead(uri);
         CloseableHttpResponse response = client.execute(host, head);
-
-        assertStatusCode(HttpStatus.SC_BAD_REQUEST, response);
-    }
-
-    @Test
-    public void testScanClassInvalidClassMethod() throws IOException, URISyntaxException {
-        URI uri = new URI("/scan/class/method/error");
-        HttpGet get = new HttpGet(uri);
-        CloseableHttpResponse response = client.execute(host, get);
 
         assertStatusCode(HttpStatus.SC_NOT_FOUND, response);
     }

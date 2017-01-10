@@ -40,9 +40,4 @@ public class ScanClassHandler {
         response.setBody((TEST_RESPONSE + "<br>" + request.getPath() + CLOSE_HTML).getBytes());
         response.flushBuffer();
     }
-
-    @URL(methods = HttpMethod.GET, value = "/scan/class/method/error")
-    public void indexScanClassInvalidClassMethod(Request request) throws IOException {
-
-    }
 }
