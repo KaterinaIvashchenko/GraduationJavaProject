@@ -45,9 +45,6 @@ public class CookieExample {
                     session.setParams("surname", surname);
                     session.setParams("password", password);
 
-                    sb.append("<p>Your name from session: " + name + "</p>");
-                    sb.append("<p>Your surname from session: " + surname + "</p>");
-                    sb.append("<p>Your password from session: " + password + "</p>");
                     sb.append("<p><a href=\"./page1\">to Page 1</a>&nbsp;");
                     sb.append("<a href=\"./page2\">to Page 2</a></p>");
 
@@ -58,7 +55,7 @@ public class CookieExample {
                 writer.print(sb.toString());
 
                 response.flushBuffer();
-                System.out.println(Server.getSessions());
+//                System.out.println(Server.getSessions());
             }
         };
 
@@ -67,6 +64,7 @@ public class CookieExample {
             public void handle(Request request, Response response) throws Exception {
 
                 Session session = request.getSession();
+                response.setCookie(new Cookie("JSESSIONID", session.getId()));
 
                 String name = session.getParams("name");
                 String surname = session.getParams("surname");
@@ -88,7 +86,7 @@ public class CookieExample {
                 writer.print(sb.toString());
 
                 response.flushBuffer();
-                System.out.println(Server.getSessions());
+//                System.out.println(Server.getSessions());
             }
         };
 
@@ -97,6 +95,7 @@ public class CookieExample {
             public void handle(Request request, Response response) throws Exception {
 
                 Session session = request.getSession();
+                response.setCookie(new Cookie("JSESSIONID", session.getId()));
 
                 String name = session.getParams("name");
                 String surname = session.getParams("surname");
@@ -118,7 +117,7 @@ public class CookieExample {
                 writer.print(sb.toString());
 
                 response.flushBuffer();
-                System.out.println(Server.getSessions());
+//                System.out.println(Server.getSessions());
             }
         };
 

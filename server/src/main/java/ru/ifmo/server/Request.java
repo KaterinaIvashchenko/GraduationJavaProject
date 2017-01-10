@@ -157,7 +157,6 @@ public class Request {
             String uniqSid = Session.generateSID();
             session.setId(uniqSid);
             Server.setSessions(uniqSid, session);
-            System.out.println(getHeaders());
         } else {
             session = Server.getSessions().get(getCookieValue("JSESSIONID"));
             if (session == null) {
