@@ -3,9 +3,8 @@ package ru.ifmo.server;
 import org.junit.Test;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.net.URL;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -13,27 +12,39 @@ import static org.junit.Assert.*;
 
 public class ConfigLoaderTest {
 
+    private static String PATH = "/success";
+
     @Test
     public void testProperties() throws IOException {
 
-        // 1.Create test web-server.properties
+        URL resourse = getClass().getClassLoader().getResource("web-server.properties");
 
-        File prop = new File(getClass().getClassLoader().getResource("web-server.properties").getFile());
+        assertNotNull(resourse);
 
-        // 2.Load with config loader
+        File prop = new File(resourse.getFile());
 
         ServerConfig config = new ConfigLoader().load(prop);
 
-        // 3.Check
+        checkConfig(config);
+    }
+
+    @Test
+    public void testPropertiesClasspath() throws Exception {
+        ServerConfig config = new ConfigLoader().load();
+
+        checkConfig(config);
+    }
+
+    private void checkConfig(ServerConfig config) {
 
         assertEquals(8081, config.getPort());
         assertEquals(5000, config.getSocketTimeout());
 
-        Set<String> paths = new HashSet<>(Arrays.asList("/success"));
+        Set<String> paths = new HashSet<>(Collections.singleton(PATH));
 
         assertEquals(paths, config.getHandlers().keySet());
-        assertNotNull(config.getHandlers().get("/success"));
-        assertEquals(SuccessHandler.class, config.getHandlers().get("/success").getClass());
-    }
+        assertNotNull(config.getHandlers().get(PATH));
+        assertEquals(SuccessHandler.class, config.getHandlers().get(PATH).getClass());
 
+    }
 }

@@ -1,5 +1,6 @@
 package ru.ifmo.server;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -8,5 +9,5 @@ import java.lang.reflect.InvocationTargetException;
 
 public interface ConfigParser {
 
-    ServerConfig parse() throws IllegalAccessException, InvocationTargetException;
+    ServerConfig parse() throws ReflectiveOperationException, IOException;
 }

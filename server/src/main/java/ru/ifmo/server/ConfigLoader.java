@@ -1,32 +1,30 @@
 package ru.ifmo.server;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
+import java.io.IOException;
+import java.io.InputStream;
 
-/**
- * Universal config file parser
- */
+/** Universal config file parser */
 
 public class ConfigLoader {
 
     public ServerConfig load(File file) {
+        assert file != null;
 
         try {
             return getParser(file).parse();
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new ServerException("Can't parse config");
+        } catch (ReflectiveOperationException | IOException e) {
+            throw new ServerException("Unable to parse config files: " + file.getAbsolutePath(), e);
         }
     }
 
     public ServerConfig load() {
-        File prop = new File(getClass().getClassLoader().getResource("web-server.properties").getFile());
-
-        //Где нужно искать файл пропертис или xml? В файловой системе или в ресурсах?
+       ConfigParser parser = getParser();
 
         try {
-            return getParser(prop).parse();
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new ServerException("Can't parse config");
+            return parser == null ? null : parser.parse();
+        } catch (ReflectiveOperationException | IOException e) {
+            throw new ServerException("Unable to parse config files: ", e);
         }
     }
 
@@ -34,6 +32,16 @@ public class ConfigLoader {
         if (file.getName().endsWith(".properties"))
             return new PropertiesConfigParser(file);
 
-        throw new ServerException("Unsupported format");
+        throw new ServerException("Unsupported file format");
     }
+
+    public  ConfigParser getParser() {
+        InputStream in = getClass().getClassLoader().getResourceAsStream("web-server.properties");
+
+        if (in != null)
+            return new PropertiesConfigParser(in);
+
+        return null;
+    }
+
 }
