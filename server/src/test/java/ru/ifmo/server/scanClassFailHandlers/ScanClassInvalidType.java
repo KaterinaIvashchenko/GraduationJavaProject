@@ -7,7 +7,7 @@ import ru.ifmo.server.annotation.URL;
 
 
 public class ScanClassInvalidType {
-    @URL(methods = HttpMethod.GET, value = "/scan")
+    @URL(method = HttpMethod.GET, value = "/scan")
     public String failType(Request request, Response response) {
         return "";
     }

@@ -9,14 +9,8 @@ import ru.ifmo.server.scanClassFailHandlers.ScanClassInvalidModifier;
 import ru.ifmo.server.scanClassFailHandlers.ScanClassInvalidParameters;
 import ru.ifmo.server.scanClassFailHandlers.ScanClassInvalidType;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
-
 
 public class ScanClassFailTest {
     private static Server server;
@@ -38,8 +32,8 @@ public class ScanClassFailTest {
         server = null;
     }
 
-    @Test(expected = ServerReflectException.class)
-    public void testFailParameters() throws ServerReflectException {
+    @Test(expected = ServerException.class)
+    public void testFailParameters() throws ServerException {
         Collection<Class<?>> classes = new ArrayList<>();
         classes.add(ScanClassInvalidParameters.class);
         ScanClassFailTest.cfg.addClasses(classes);
@@ -47,8 +41,8 @@ public class ScanClassFailTest {
         ScanClassFailTest.server = Server.start(cfg);
     }
 
-    @Test(expected = ServerReflectException.class)
-    public void testFailType() throws ServerReflectException {
+    @Test(expected = ServerException.class)
+    public void testFailType() throws ServerException {
         Collection<Class<?>> classes = new ArrayList<>();
         classes.add(ScanClassInvalidType.class);
         ScanClassFailTest.cfg.addClasses(classes);
@@ -56,8 +50,8 @@ public class ScanClassFailTest {
         ScanClassFailTest.server = Server.start(cfg);
     }
 
-    @Test(expected = ServerReflectException.class)
-    public void testFailModifier() throws ServerReflectException {
+    @Test(expected = ServerException.class)
+    public void testFailModifier() throws ServerException {
         Collection<Class<?>> classes = new ArrayList<>();
         classes.add(ScanClassInvalidModifier.class);
         ScanClassFailTest.cfg.addClasses(classes);

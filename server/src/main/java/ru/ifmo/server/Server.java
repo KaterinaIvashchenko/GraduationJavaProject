@@ -149,22 +149,22 @@ public class Server implements Closeable {
                             if (params[0].equals(Request.class) && params[1].equals(Response.class)) {
                                 String path = an.value();
 
-                                HttpMethod[] rest = new HttpMethod[an.methods().length - 1];
-                                System.arraycopy(an.methods(), 1, rest, 0, rest.length);
-                                EnumSet<HttpMethod> set = EnumSet.of(an.methods()[0], rest);
+                                HttpMethod[] rest = new HttpMethod[an.method().length - 1];
+                                System.arraycopy(an.method(), 1, rest, 0, rest.length);
+                                EnumSet<HttpMethod> set = EnumSet.of(an.method()[0], rest);
 
                                 ReflectHandler reflectHandler = new ReflectHandler(cls.newInstance(), method, set);
                                 classHandlers.put(path, reflectHandler);
                             }
                         } else {
-                                throw new ServerReflectException("Invalid method: " + method + '\n' + "Valid method:" + '\n' +
+                                throw new ServerException("Invalid method: " + method + '\n' + "Valid method:" + '\n' +
                                     "void type" +'\n' + "public modifier" + '\n' + "2 parameters - (Request request, Response response)");
                         }
 
                     }
                 }
             } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
-                    throw new ServerReflectException("Reflection error" + e);
+                    throw new ServerException("Reflection error" + e);
             }
         }
     }

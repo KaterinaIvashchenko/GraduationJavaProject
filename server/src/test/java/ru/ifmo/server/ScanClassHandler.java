@@ -11,31 +11,31 @@ public class ScanClassHandler {
 
     public static final String TEST_RESPONSE = OPEN_HTML + "<html><body>Test response";
 
-    @URL(methods = HttpMethod.GET, value = "/scanGET")
+    @URL(method = HttpMethod.GET, value = "/scanGET")
     public void indexScanClassGET(Request request, Response response) throws IOException {
         response.setBody((TEST_RESPONSE + "<br>" + request.getPath() + CLOSE_HTML).getBytes());
         response.flushBuffer();
     }
 
-    @URL(methods = HttpMethod.ANY, value = "/scanANY")
+    @URL(method = HttpMethod.ANY, value = "/scanANY")
     public void indexScanClassANY(Request request, Response response) throws IOException {
         response.setBody((TEST_RESPONSE + "<br>" + request.getPath() + CLOSE_HTML).getBytes());
         response.flushBuffer();
     }
 
-    @URL(methods = {HttpMethod.HEAD, HttpMethod.GET}, value = "/scan/get")
+    @URL(method = {HttpMethod.HEAD, HttpMethod.GET}, value = "/scan/get")
     public void indexScanClassGETorHEAD1(Request request, Response response) throws IOException {
         response.setBody((TEST_RESPONSE + "<br>" + request.getPath() + CLOSE_HTML).getBytes());
         response.flushBuffer();
     }
 
-    @URL(methods = {HttpMethod.GET, HttpMethod.HEAD}, value = "/scan/head")
+    @URL(method = {HttpMethod.GET, HttpMethod.HEAD}, value = "/scan/head")
     public void indexScanClassGETorHEAD2(Request request, Response response) throws IOException {
         response.setBody((TEST_RESPONSE + "<br>" + request.getPath() + CLOSE_HTML).getBytes());
         response.flushBuffer();
     }
 
-    @URL(methods = {HttpMethod.GET, HttpMethod.DELETE}, value = "/scan/error")
+    @URL(method = {HttpMethod.GET, HttpMethod.DELETE}, value = "/scan/error")
     public void indexScanClassInvalidMethod(Request request, Response response) throws IOException {
         response.setBody((TEST_RESPONSE + "<br>" + request.getPath() + CLOSE_HTML).getBytes());
         response.flushBuffer();

@@ -6,7 +6,7 @@ import ru.ifmo.server.Request;
 import ru.ifmo.server.annotation.URL;
 
 public class ScanClassInvalidParameters {
-    @URL(methods = HttpMethod.GET, value = "/scan")
+    @URL(method = HttpMethod.GET, value = "/scan")
     public void failParameters(Request request) {
     }
 }

@@ -7,7 +7,7 @@ import ru.ifmo.server.annotation.URL;
 
 
 public class ScanClassInvalidModifier {
-    @URL(methods = HttpMethod.GET, value = "/scan")
+    @URL(method = HttpMethod.GET, value = "/scan")
     private void failParameters(Request request, Response response) {
     }
 }
