@@ -9,8 +9,9 @@ import java.io.PrintWriter;
  */
 public class CookieExample {
 
-    public static void main(String[] args) {
 
+
+    public static void main(String[] args) {
 
         Handler handler = new Handler() {
             @Override
@@ -26,14 +27,20 @@ public class CookieExample {
 
                 sb.append("<!DOCTYPE html>");
                 sb.append("<html><body>");
-                sb.append("<p><b>Login page</b></p>");
-                sb.append("<p>Hello " + name + "</p>");
+                sb.append("<head><title>Java kanban project</title>");
+                sb.append("</title>");
+                sb.append("<p><b>Login page</b></p><br>");
+                if (name == null) {
+                    sb.append("<p>Hello new user!</p>");
+                } else {
+                    sb.append("<p>Hello " + name + "</p>");
+                }
                 if (name == null && surname == null && password == null) {
 
                     sb.append("<form method=\"POST\" action=\"" + request.getPath() + "\">");
                     sb.append("Name: <input type=\"text\" name=\"name\"></input><br><br>");
                     sb.append("Surname: <input type=\"text\" name=\"surname\"></input><br><br>");
-                    sb.append("Password: <input type=\"text\" name=\"password\"></input><br><br>");
+                    sb.append("Password: <input type=\"password\" name=\"password\"></input><br><br>");
                     sb.append("<input type=\"submit\" value=\"submit\"></input>");
                     sb.append("</form>");
                 } else {
@@ -58,7 +65,6 @@ public class CookieExample {
 //                System.out.println(Server.getSessions());
             }
         };
-
         Handler handler2 = new Handler() {
             @Override
             public void handle(Request request, Response response) throws Exception {
@@ -76,11 +82,15 @@ public class CookieExample {
 
                 sb.append("<!DOCTYPE html>");
                 sb.append("<html><body>");
-                sb.append("<p><b>Page 1</b></p>");
+                sb.append("<head><title>Java kanban project</title>");
+                sb.append("</title>");
+                sb.append("<p><b>Page 1</b></p><br>");
+                sb.append("<p>session: " + session.getId() + "</p>");
                 sb.append("<p>Your name from session: " + name + "</p>");
                 sb.append("<p>Your surname from session: " + surname + "</p>");
                 sb.append("<p>Your password from session: " + password + "</p>");
                 sb.append("<a href=\"./page2\">to Page 2</a></p>");
+                sb.append("<a href=\"./logout\">Exit</a></p>");
                 sb.append("</body></html>");
 
                 writer.print(sb.toString());
@@ -89,7 +99,6 @@ public class CookieExample {
 //                System.out.println(Server.getSessions());
             }
         };
-
         Handler handler3 = new Handler() {
             @Override
             public void handle(Request request, Response response) throws Exception {
@@ -107,11 +116,49 @@ public class CookieExample {
 
                 sb.append("<!DOCTYPE html>");
                 sb.append("<html><body>");
-                sb.append("<p><b>Page 2</b></p>");
+                sb.append("<head><title>Java kanban project</title>");
+                sb.append("</title>");
+                sb.append("<p><b>Page 2</b></p><br>");
+                sb.append("<p>session: " + session.getId() + "</p>");
                 sb.append("<p>Your name from session: " + name + "</p>");
                 sb.append("<p>Your surname from session: " + surname + "</p>");
                 sb.append("<p>Your password from session: " + password + "</p>");
                 sb.append("<a href=\"./page1\">to Page 1</a></p>");
+                sb.append("<a href=\"./logout\">Exit</a></p>");
+                sb.append("</body></html>");
+
+                writer.print(sb.toString());
+
+                response.flushBuffer();
+//                System.out.println(Server.getSessions());
+            }
+        };
+        Handler handler4 = new Handler() {
+            @Override
+            public void handle(Request request, Response response) throws Exception {
+
+                Session session = request.getSession();
+
+                session.invalidate();
+
+                String name = session.getParams("name");
+                String surname = session.getParams("surname");
+                String password = session.getParams("password");
+
+                PrintWriter writer = response.getWriter();
+
+                StringBuilder sb = new StringBuilder();
+
+                sb.append("<!DOCTYPE html>");
+                sb.append("<html><body>");
+                sb.append("<head><title>Java kanban project</title>");
+                sb.append("</title>");
+                sb.append("<p><b>Logout page</b></p><br>");
+                sb.append("<p>session: " + session.getId() + "</p>");
+                sb.append("<p>Your name from session: " + name + "</p>");
+                sb.append("<p>Your surname from session: " + surname + "</p>");
+                sb.append("<p>Your password from session: " + password + "</p>");
+                sb.append("<a href=\"./login\">Login</a></p>");
                 sb.append("</body></html>");
 
                 writer.print(sb.toString());
@@ -121,12 +168,12 @@ public class CookieExample {
             }
         };
 
-
         ServerConfig config = new ServerConfig();
 
         config.addHandler("/login", handler);
         config.addHandler("/page1", handler2);
         config.addHandler("/page2", handler3);
+        config.addHandler("/logout", handler4);
 
         Server.start(config);
 

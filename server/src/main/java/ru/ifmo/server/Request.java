@@ -134,7 +134,7 @@ public class Request {
         } else return null;
     }
 
-    private Boolean containsCookie(String cookiename) {
+    private Boolean containsJSIDCookie() {
 
         Boolean flag = false;
 
@@ -152,10 +152,11 @@ public class Request {
 
 
     public Session getSession() {
-        if (!containsCookie("JSESSIONID")) {
+        if (!containsJSIDCookie()) {
             session = new Session();
             String uniqSid = Session.generateSID();
             session.setId(uniqSid);
+            session.setExpire(1);
             Server.setSessions(uniqSid, session);
         } else {
             session = Server.getSessions().get(getCookieValue("JSESSIONID"));
@@ -170,6 +171,7 @@ public class Request {
             session = new Session();
             String uniqSid = Session.generateSID();
             session.setId(uniqSid);
+            session.setExpire(1);
             Server.setSessions(uniqSid, session);
         return session;
     }

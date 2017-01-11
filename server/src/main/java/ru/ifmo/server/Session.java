@@ -1,5 +1,7 @@
 package ru.ifmo.server;
 
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +11,16 @@ import java.util.Map;
 public class Session {
 
     String id;
+    LocalDateTime expire;
+
+    public LocalDateTime getExpire() {
+        return expire;
+    }
+
+    public void setExpire(Integer minutes) {
+        LocalDateTime expLdt = LocalDateTime.now().plusMinutes(minutes);
+        this.expire = expLdt;
+    }
 
     public String getId() {
         return id;
@@ -25,7 +37,8 @@ public class Session {
     @Override
     public String toString() {
         return "Session{" +
-                "sessionData=" + sessionData +
+                "sessionData=" + sessionData + ", " +
+                "expires=" + expire +
                 '}';
     }
 
