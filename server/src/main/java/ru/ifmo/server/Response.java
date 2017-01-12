@@ -8,6 +8,9 @@ import java.net.Socket;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.GZIPOutputStream;
 
 import static ru.ifmo.server.Http.SC_OK;
 import static ru.ifmo.server.Http.statusNames;
@@ -23,6 +26,11 @@ public class Response {
     private ByteArrayOutputStream bufferOutputStream;
     private PrintWriter printWriter;
     private Map<String,String> headers;
+    private ServerConfig config;
+
+    public void setConfig(ServerConfig config) {
+        this.config = config;
+    }
 
     Response(Socket socket) {
         this.socket = socket;
@@ -48,15 +56,17 @@ public class Response {
             for (String key:headers.keySet()) {
                 out.write((key+":"+SPACE+headers.get(key) + CRLF).getBytes());
             }
-            out.write(CRLF.getBytes());
-            out.write(bufferOutputStream.toByteArray());
+
+            compressBody(out);
+
             out.flush();
+
         } catch (IOException e) {
             throw new ServerException("Cannot get output stream", e);
         }
     }
 
-    /**
+     /**
      * @return {@link OutputStream} connected to the client.
      */
     @Deprecated
@@ -73,10 +83,12 @@ public class Response {
      * Returns a buffered OutputStream suitable for writing binary data in the response. Need send responseto client exec method FlushBuffer
      * @return buffered OutputStream
      */
-    public OutputStream getOutputStreamBuffer() {
+    public OutputStream getOutputStreamBuffer() throws IOException {
         if (bufferOutputStream==null)
             bufferOutputStream = new ByteArrayOutputStream();
+//        GZIPOutputStream gzout = new GZIPOutputStream(bufferOutputStream);
 
+//        return gzout;
         return bufferOutputStream;
     }
 
@@ -98,7 +110,7 @@ public class Response {
      * @return {@link PrintWriter}
      * @throws ServerException  if an output exception occurred
      */
-    public PrintWriter getWriter() {
+    public PrintWriter getWriter() throws IOException {
         if (printWriter==null)
             printWriter = new PrintWriter(getOutputStreamBuffer());
         return printWriter;
@@ -147,6 +159,30 @@ public class Response {
             throw new ServerException("Not valid http status code:" + code);
         }
         statusCode = code;
+    }
+
+    public void compressBody (OutputStream out) throws IOException {
+        OutputStream compressedOut;
+        if (ServerConfig.getCompressionType() == CompressionType.GZIP) {
+            out.write(("Content-Encoding: gzip" + CRLF).getBytes());
+            out.write(CRLF.getBytes());
+            compressedOut = new GZIPOutputStream(out);
+            compressedOut.write(bufferOutputStream.toByteArray());
+            compressedOut.flush();
+            compressedOut.close();
+        } else if (ServerConfig.getCompressionType() == CompressionType.DEFLATE) {
+            out.write(("Content-Encoding: deflate" + CRLF).getBytes());
+            out.write(CRLF.getBytes());
+            compressedOut = new DeflaterOutputStream(out);
+            compressedOut.write(bufferOutputStream.toByteArray());
+            compressedOut.flush();
+            compressedOut.close();
+        } else {
+            out.write(CRLF.getBytes());
+            out.write(bufferOutputStream.toByteArray());
+            out.flush();
+        }
+
     }
 
     /**

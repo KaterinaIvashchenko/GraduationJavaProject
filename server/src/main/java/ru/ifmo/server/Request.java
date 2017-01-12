@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.net.URI;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_LENGTH;
 import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_TYPE;
@@ -98,6 +96,20 @@ public class Request {
             return Collections.emptyMap();
 
         return Collections.unmodifiableMap(args);
+    }
+
+    public List<String> getAviableCompressions() {
+
+        if (headers == null) {
+            return null;
+        }
+            List<String> compresList = new ArrayList<>();
+            String comprLine = getHeaders().get("Accept-Encoding");
+            String[] items = comprLine.split(", ");
+            for (int i = 0; i < items.length; i++) {
+                compresList.add((items[i]));
+            }
+        return Collections.unmodifiableList(compresList);
     }
 
     @Override

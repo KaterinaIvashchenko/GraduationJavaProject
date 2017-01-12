@@ -14,7 +14,15 @@ public class ServerConfig {
     private Map<String, Handler> handlers;
     private int socketTimeout;
     private Dispatcher dispatcher;
+    private static CompressionType compressionType;
 
+    public static CompressionType getCompressionType() {
+        return compressionType;
+    }
+
+    public void setCompressionType(CompressionType compressionType) {
+        this.compressionType = compressionType;
+    }
 
     public ServerConfig() {
         handlers = new HashMap<>();

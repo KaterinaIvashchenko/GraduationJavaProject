@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -19,11 +20,11 @@ import static ru.ifmo.server.Http.*;
 /**
  * Ifmo Web Server.
  * <p>
- *     To start server use {@link #start(ServerConfig)} and register at least
- *     one handler to process HTTP requests.
- *     Usage example:
- *     <pre>
- *{@code
+ * To start server use {@link #start(ServerConfig)} and register at least
+ * one handler to process HTTP requests.
+ * Usage example:
+ * <pre>
+ * {@code
  * ServerConfig config = new ServerConfig()
  *      .addHandler("/index", new Handler() {
  *          public void handle(Request request, Response response) throws Exception {
@@ -38,8 +39,9 @@ import static ru.ifmo.server.Http.*;
  *     </pre>
  * </p>
  * <p>
- *     To stop the server use {@link #stop()} or {@link #close()} methods.
+ * To stop the server use {@link #stop()} or {@link #close()} methods.
  * </p>
+ *
  * @see ServerConfig
  */
 public class Server implements Closeable {
@@ -83,8 +85,7 @@ public class Server implements Closeable {
 
             LOG.info("Server started on port: {}", config.getPort());
             return server;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new ServerException("Cannot start server on port: " + config.getPort());
         }
     }
@@ -109,6 +110,19 @@ public class Server implements Closeable {
         socket = null;
     }
 
+    private void allowCompression(Request request) {
+
+        List<String> compressions = request.getAviableCompressions();
+        if (ServerConfig.getCompressionType() == null) {
+            if (compressions.contains("gzip")) {
+                config.setCompressionType(CompressionType.GZIP);
+            } else if (compressions.contains("deflate")) {
+                config.setCompressionType(CompressionType.DEFLATE);
+            } else
+                config.setCompressionType(CompressionType.NONE);
+        }
+    }
+
     private void processConnection(Socket sock) throws IOException {
         if (LOG.isDebugEnabled())
             LOG.debug("Accepting connection on: {}", sock);
@@ -122,8 +136,7 @@ public class Server implements Closeable {
 
             if (LOG.isDebugEnabled())
                 LOG.debug("Parsed request: {}", req);
-        }
-        catch (URISyntaxException e) {
+        } catch (URISyntaxException e) {
             if (LOG.isDebugEnabled())
                 LOG.error("Malformed URL", e);
 
@@ -131,8 +144,7 @@ public class Server implements Closeable {
                     sock.getOutputStream());
 
             return;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error parsing request", e);
 
             respond(SC_SERVER_ERROR, "Server Error", htmlMessage(SC_SERVER_ERROR + " Server error"),
@@ -148,25 +160,25 @@ public class Server implements Closeable {
             return;
         }
 
+        allowCompression(req);
+
         Response resp = new Response(sock);
 
         Dispatcher dispatcher = config.getDispatcher();
 
-        final String path = dispatcher != null ?  dispatcher.dispatch(req, resp) : req.getPath();
+        final String path = dispatcher != null ? dispatcher.dispatch(req, resp) : req.getPath();
 
         Handler handler = config.handler(path);
 
         if (handler != null) {
             try {
                 handler.handle(req, resp);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 if (LOG.isDebugEnabled())
                     LOG.error("Server error:", e);
-                respond(SC_SERVER_ERROR,htmlMessage(SC_SERVER_ERROR + " Server error"),resp);
+                respond(SC_SERVER_ERROR, htmlMessage(SC_SERVER_ERROR + " Server error"), resp);
             }
-        }
-        else
+        } else
             respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
                     sock.getOutputStream());
     }
@@ -175,6 +187,7 @@ public class Server implements Closeable {
         out.write(("HTTP/1.0" + SPACE + code + SPACE + statusMsg + CRLF + CRLF + content).getBytes());
         out.flush();
     }
+
     static void respond(int code, String content, Response resp) throws IOException {
         resp.setStatusCode(code);
         resp.setBody(content.getBytes());
@@ -211,8 +224,7 @@ public class Server implements Closeable {
                     sock.setSoTimeout(config.getSocketTimeout());
 
                     processConnection(sock);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     if (!Thread.currentThread().isInterrupted())
                         LOG.error("Error accepting connection", e);
                 }
