@@ -125,13 +125,21 @@ public class Server implements Closeable {
         EnumSet<HttpMethod> set;
 
         ReflectHandler(Object obj, Method m, EnumSet<HttpMethod> set) {
+            assert m != null;
+            assert obj != null;
+            assert set != null && !set.isEmpty();
+
             this.m = m;
             this.obj = obj;
             this.set = set;
         }
+
+        boolean isApplicable(HttpMethod method) {
+            return set.contains(HttpMethod.ANY) || set.contains(method);
+        }
     }
 
-    public void addScanClasses(Collection<Class<?>> classes) {
+    private void addScanClasses(Collection<Class<?>> classes) {
         Collection<Class<?>> classList = new ArrayList<>(classes);
 
         for (Class<?> c : classList) {
@@ -145,46 +153,36 @@ public class Server implements Closeable {
                         Class<?>[] params = method.getParameterTypes();
                         Class<?> methodType = method.getReturnType();
 
-                        if (params.length == 2 && methodType.equals(void.class) && Modifier.isPublic(method.getModifiers())) {
-                            if (params[0].equals(Request.class) && params[1].equals(Response.class)) {
-                                String path = an.value();
+                        if (params.length == 2 && methodType.equals(void.class) && Modifier.isPublic(method.getModifiers())
+                                && params[0].equals(Request.class) && params[1].equals(Response.class)) {
+                            String path = an.value();
 
-                                HttpMethod[] rest = new HttpMethod[an.method().length - 1];
-                                System.arraycopy(an.method(), 1, rest, 0, rest.length);
-                                EnumSet<HttpMethod> set = EnumSet.of(an.method()[0], rest);
+                            EnumSet<HttpMethod> set = EnumSet.copyOf(Arrays.asList(an.method()));
 
-                                ReflectHandler reflectHandler = new ReflectHandler(cls.newInstance(), method, set);
-                                classHandlers.put(path, reflectHandler);
-                            }
+                            ReflectHandler reflectHandler = new ReflectHandler(cls.newInstance(), method, set);
+                            classHandlers.put(path, reflectHandler);
                         } else {
-                                throw new ServerException("Invalid method: " + method + '\n' + "Valid method:" + '\n' +
-                                    "void type" +'\n' + "public modifier" + '\n' + "2 parameters - (Request request, Response response)");
+                                throw new ServerException("Invalid @URL annotated method: " + c.getSimpleName() + "." + method.getName() + "(). "
+                                        + "Valid method: must be public void and accept only two arguments: Request and Response." + '\n' +
+                                    "Example: public void helloWorld(Request request, Response Response");
                         }
 
                     }
                 }
-            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
-                    throw new ServerException("Reflection error" + e);
+            } catch (ReflectiveOperationException e) {
+                    throw new ServerException("Unable initialize @URL annotated handlers. ", e);
             }
         }
     }
 
     private void processReflectHandler(ReflectHandler rf, Request req, Response resp, Socket sock) throws IOException {
-        boolean isInvoked = false;
         try {
-            if (rf.set.contains(HttpMethod.ANY) || rf.set.contains(req.method)) {
-                rf.m.invoke(rf.obj, req, resp);
-                isInvoked = true;
-            }
-        } catch (IllegalAccessException | InvocationTargetException e) {
+            rf.m.invoke(rf.obj, req, resp);
+        } catch (Exception e) { // Handle any user exception here.
             if (LOG.isDebugEnabled())
                 LOG.error("Error invoke method:" + rf.m, e);
 
             respond(SC_SERVER_ERROR, "Server Error", htmlMessage(SC_SERVER_ERROR + " Server error"),
-                    sock.getOutputStream());
-        }
-        if (!isInvoked) {
-            respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
                     sock.getOutputStream());
         }
     }
@@ -244,9 +242,9 @@ public class Server implements Closeable {
             }
         } else {
             ReflectHandler reflectHandler = classHandlers.get(req.getPath());
-            if (reflectHandler != null) {
+            if (reflectHandler != null && reflectHandler.isApplicable(req.method))
                 processReflectHandler(reflectHandler, req, resp, sock);
-            } else
+            else
                 respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
                         sock.getOutputStream());
         }

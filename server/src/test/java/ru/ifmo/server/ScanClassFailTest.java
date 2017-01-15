@@ -5,9 +5,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.junit.*;
-import ru.ifmo.server.scanClassFailHandlers.ScanClassInvalidModifier;
-import ru.ifmo.server.scanClassFailHandlers.ScanClassInvalidParameters;
-import ru.ifmo.server.scanClassFailHandlers.ScanClassInvalidType;
+import ru.ifmo.server.scan.fail.ScanClassInvalidModifier;
+import ru.ifmo.server.scan.fail.ScanClassInvalidParameters;
+import ru.ifmo.server.scan.fail.ScanClassInvalidType;
 
 import java.util.ArrayList;
 import java.util.Collection;

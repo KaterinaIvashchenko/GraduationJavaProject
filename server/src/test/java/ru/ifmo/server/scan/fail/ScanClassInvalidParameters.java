@@ -1,4 +1,4 @@
-package ru.ifmo.server.scanClassFailHandlers;
+package ru.ifmo.server.scan.fail;
 
 
 import ru.ifmo.server.HttpMethod;
