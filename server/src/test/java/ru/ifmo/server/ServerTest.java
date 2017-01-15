@@ -381,4 +381,13 @@ public class ServerTest {
 
         assertStatusCode(HttpStatus.SC_NOT_FOUND, response);
     }
+
+    @Test
+    public void testThrowException() throws IOException, URISyntaxException {
+        URI uri = new URI("/userException");
+        HttpGet get = new HttpGet(uri);
+        CloseableHttpResponse response = client.execute(host, get);
+
+        assertStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR, response);
+    }
 }

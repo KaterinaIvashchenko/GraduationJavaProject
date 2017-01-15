@@ -40,4 +40,9 @@ public class ScanClassHandler {
         response.setBody((TEST_RESPONSE + "<br>" + request.getPath() + CLOSE_HTML).getBytes());
         response.flushBuffer();
     }
+
+    @URL(method = HttpMethod.GET, value = "/userException")
+    public void throwException(Request request, Response response) throws Exception {
+        throw new Exception("oops!");
+    }
 }
