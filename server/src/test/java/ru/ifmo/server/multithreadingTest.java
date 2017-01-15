@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
 
 public class multithreadingTest {
@@ -30,8 +31,9 @@ public class multithreadingTest {
     static volatile boolean isfinished = false;
 
     public synchronized static void isFinishedTrue() {
-        isfinished = true;
+        isfinished = !isfinished;
     }
+
 
 
     @BeforeClass
@@ -51,15 +53,20 @@ public class multithreadingTest {
     @AfterClass
     public static void stop() {
         IOUtils.closeQuietly(server);
+        IOUtils.closeQuietly(client1);
+        IOUtils.closeQuietly(client2);
+
 
         server = null;
+        client1 = null;
+        client2 = null;
+
 
         isfinished = false;
 
     }
 
-    public class RequestHandler {
-
+    public class RequestHandler implements Runnable {
         CloseableHttpClient client;
         HttpHost host;
         HttpGet get;
@@ -69,79 +76,34 @@ public class multithreadingTest {
             this.host = host;
             this.get = get;
         }
-    }
 
-
-    public class Waiter implements Runnable {
-
-        private RequestHandler requestHandler;
-
-        public Waiter(RequestHandler rh) {
-            this.requestHandler = rh;
-        }
-
-        @Override
-        public void run() {
-            synchronized (requestHandler) {
-                try {
-                    requestHandler.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                assertEquals(true, isfinished);
-
-            }
-        }
-    }
-
-    public class Notifier implements Runnable {
-
-        private RequestHandler requestHandler;
-
-        public Notifier(RequestHandler rh) {
-            this.requestHandler = rh;
-        }
-
-        @Override
         public void run() {
 
-            synchronized (requestHandler) {
-                try {
-                    this.requestHandler.client.execute(this.requestHandler.host, this.requestHandler.get);
-                    Thread.currentThread().sleep(200);  // Если уменьшить этот параметр, то запрос не успевает отработать. (накладные расходы на
-                                                              // добавления задачи в pool, а так же дальнеёшая её обработка. )
-                    requestHandler.notify();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
+            try {
+                this.client.execute(this.host, this.get);
+            } catch (IOException e) {
+                System.out.println("Error trying to process request..");
+                e.printStackTrace();
             }
+
+
         }
-
     }
-
 
     @Test
     public void testProcessConnection() throws Exception {
 
-        RequestHandler requestHandler1 = new RequestHandler(client1, host, get1);
-        RequestHandler requestHandler2 = new RequestHandler(client2, host, get2);
+        new Thread(new RequestHandler(client1, host, get1)).start(); // На этот запрос стоит тайм-аут в 200 милисекунд
+        assertEquals(false, isfinished); // Первый поток еще НЕ закончил свою работу.
 
-        Waiter waiter1 = new Waiter(requestHandler1);
-        new Thread(waiter1, "waiter1").start();
+        new Thread(new RequestHandler(client2, host, get2)).start(); // На этот запрос тайм-аут отсутствует
+        sleep(100); // Если этот тайм-аут сделать меньше или вообще убрать, то поток не успевает отработать
+        assertEquals(true, isfinished); // Второй поток закончил свою работу
 
-        Waiter waiter2 = new Waiter(requestHandler2);
-        new Thread(waiter2, "waiter2").start();
-
-        Notifier notifier1 = new Notifier(requestHandler1);
-        new Thread(notifier1, "notifier1").start();
-
-        Notifier notifier2 = new Notifier(requestHandler2);
-        new Thread(notifier2, "notifier2").start();
+        sleep(200); // Если этот тайм-аут сделать меньше, то мы получаем ошибку - java.lang.IllegalStateException: Connection pool shut down
+                          // отрабатывает метод IOUtils.closeQuietly(client1);
+        assertEquals(false, isfinished); // Первый поток закончил свою работу.
 
     }
 }
-
 
