@@ -32,7 +32,7 @@ public class ServerTest {
     private static final HttpHost host = new HttpHost("localhost", ServerConfig.DFLT_PORT);
 
     private static final String SUCCESS_URL = "/test_success";
-    private static final String SUCCESS_URL_NEW = "/test_success_new";
+    private static final String SUCCESS_URL_HEADERS = "/test_success_headers";
     private static final String NOT_FOUND_URL = "/test_not_found";
     private static final String SERVER_ERROR_URL = "/test_fail";
     private static final String TEXT_PLAIN_URL = "/test_text_plain";
@@ -44,7 +44,7 @@ public class ServerTest {
     public static void initialize() {
         ServerConfig cfg = new ServerConfig()
                 .addHandler(SUCCESS_URL, new SuccessHandler())
-                .addHandler(SUCCESS_URL_NEW, new SuccessHandlerNew())
+                .addHandler(SUCCESS_URL_HEADERS, new SuccessHandlerWithHeaders())
                 .addHandler(SERVER_ERROR_URL, new FailHandler())
                 .addHandler(TEXT_PLAIN_URL, new TextPlainHandler())
                 .addHandler(SERVER_ERROR_URL, new FailHandler())
@@ -287,7 +287,7 @@ public class ServerTest {
 
     @Test
     public void testStatusCode() throws Exception {
-        HttpGet get = new HttpGet(SUCCESS_URL_NEW);
+        HttpGet get = new HttpGet(SUCCESS_URL_HEADERS);
 
         CloseableHttpResponse response = client.execute(host, get);
 
@@ -295,8 +295,8 @@ public class ServerTest {
     }
 
     @Test
-    public void testSuccessNew() throws Exception {
-        URI uri = new URIBuilder(SUCCESS_URL_NEW)
+    public void testSuccessWithHeaders() throws Exception {
+        URI uri = new URIBuilder(SUCCESS_URL_HEADERS)
                 .addParameter("1", "1")
                 .addParameter("2", "2")
                 .addParameter("testArg1", "testValue1")
@@ -314,12 +314,20 @@ public class ServerTest {
                         "<br>{1=1, 2=2, testArg1=testValue1, testArg2=2, testArg3=testVal3, testArg4=null}" +
                         SuccessHandler.CLOSE_HTML,
                 EntityUtils.toString(response.getEntity()));
-
         //test response headers
         assertEquals("Response not contains header Content-Length", response.containsHeader("Content-Length"),true);
         assertEquals("Response not contains header Content-Type", response.containsHeader("Content-Type"),true);
-
     }
 
+    public static void main(String[] args) {
+        ServerTest.initialize();
+        ServerTest serverTest = new ServerTest();
+        try {
+            serverTest.init();
+            serverTest.testSuccessWithHeaders();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 }

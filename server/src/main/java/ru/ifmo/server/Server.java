@@ -13,8 +13,8 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static ru.ifmo.server.util.Utils.htmlMessage;
 import static ru.ifmo.server.Http.*;
+import static ru.ifmo.server.util.Utils.htmlMessage;
 
 /**
  * Ifmo Web Server.
@@ -89,6 +89,45 @@ public class Server implements Closeable {
         }
     }
 
+    /**
+     * Forces any content in the buffer to be written to the client
+     */
+    static public void flushResponse (Response response) {
+        int statusCode = response.getStatusCode();
+
+        if (statusCode==0)
+            statusCode = SC_OK;
+            response.setStatusCode(statusCode);
+
+        try {
+            if (response.printWriter!=null)
+                response.printWriter.flush();
+
+            int contentLength = 0;
+            if (response.bufferOutputStream!=null) {
+                response.bufferOutputStream.flush();
+                contentLength = response.bufferOutputStream.size();
+            }
+            if ((response.headers.get(HEADER_NAME_CONTENT_LENGTH)==null))
+                response.setHeader(HEADER_NAME_CONTENT_LENGTH, String.valueOf(contentLength));
+
+            OutputStream out = response.socket.getOutputStream();
+            out.write(("HTTP/1.0" + SPACE + statusCode + SPACE + statusNames[statusCode] + CRLF).getBytes());
+
+            for (String key:response.headers.keySet()) {
+                out.write((key+":"+SPACE+response.headers.get(key) + CRLF).getBytes());
+            }
+            out.write(CRLF.getBytes());
+            if (response.bufferOutputStream!=null)
+                out.write(response.bufferOutputStream.toByteArray());
+
+            out.flush();
+        } catch (IOException e) {
+            throw new ServerException("Cannot get output stream", e);
+        }
+
+    }
+
     private void openConnection() throws IOException {
         socket = new ServerSocket(config.getPort());
     }
@@ -159,6 +198,7 @@ public class Server implements Closeable {
         if (handler != null) {
             try {
                 handler.handle(req, resp);
+                flushResponse(resp);
             }
             catch (Exception e) {
                 if (LOG.isDebugEnabled())
@@ -178,7 +218,7 @@ public class Server implements Closeable {
     static void respond(int code, String content, Response resp) throws IOException {
         resp.setStatusCode(code);
         resp.setBody(content.getBytes());
-        resp.flushBuffer();
+        flushResponse(resp);
     }
 
     /**
