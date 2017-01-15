@@ -29,7 +29,21 @@ public class ConfigLoaderTest {
     }
 
     @Test
-    public void testPropertiesClasspath() throws Exception {
+    public void testXml() throws Exception {
+
+        URL resourse = getClass().getClassLoader().getResource("web-server.xml");
+
+        assertNotNull(resourse);
+
+        File prop = new File(resourse.getFile());
+
+        ServerConfig config = new ConfigLoader().load(prop);
+
+        checkConfig(config);
+    }
+
+    @Test
+    public void testClasspath() throws Exception {
         ServerConfig config = new ConfigLoader().load();
 
         checkConfig(config);
@@ -45,6 +59,5 @@ public class ConfigLoaderTest {
         assertEquals(paths, config.getHandlers().keySet());
         assertNotNull(config.getHandlers().get(PATH));
         assertEquals(SuccessHandler.class, config.getHandlers().get(PATH).getClass());
-
     }
 }

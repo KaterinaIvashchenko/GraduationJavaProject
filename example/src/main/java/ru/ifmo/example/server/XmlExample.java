@@ -9,11 +9,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 
-public class PropertiesExample {
+public class XmlExample {
 
     public static void main(String[] args) throws URISyntaxException, NullPointerException, IOException {
 
-        File file = new File(PropertiesExample.class.getClassLoader().getResource("web-server.properties").getFile());
+        File file = new File(XmlExample.class.getClassLoader().getResource("web-server.xml").getFile());
 
         Server.start(file);
 

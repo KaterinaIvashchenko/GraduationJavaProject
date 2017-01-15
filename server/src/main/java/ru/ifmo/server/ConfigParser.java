@@ -1,5 +1,6 @@
 package ru.ifmo.server;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
@@ -9,5 +10,5 @@ import java.lang.reflect.InvocationTargetException;
 
 public interface ConfigParser {
 
-    ServerConfig parse() throws ReflectiveOperationException, IOException;
+    ServerConfig parse() throws ReflectiveOperationException, IOException, XMLStreamException;
 }

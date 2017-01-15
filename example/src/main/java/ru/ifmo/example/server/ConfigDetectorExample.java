@@ -3,19 +3,16 @@ package ru.ifmo.example.server;
 import ru.ifmo.server.*;
 
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 
-public class PropertiesExample {
+public class ConfigDetectorExample {
 
     public static void main(String[] args) throws URISyntaxException, NullPointerException, IOException {
 
-        File file = new File(PropertiesExample.class.getClassLoader().getResource("web-server.properties").getFile());
-
-        Server.start(file);
+        Server.start();
 
         String successPage = "http://localhost:" + 8081 + "/success";
 

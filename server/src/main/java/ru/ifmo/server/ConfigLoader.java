@@ -1,5 +1,6 @@
 package ru.ifmo.server;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,7 +14,7 @@ public class ConfigLoader {
 
         try {
             return getParser(file).parse();
-        } catch (ReflectiveOperationException | IOException e) {
+        } catch (ReflectiveOperationException | XMLStreamException | IOException e) {
             throw new ServerException("Unable to parse config files: " + file.getAbsolutePath(), e);
         }
     }
@@ -23,7 +24,7 @@ public class ConfigLoader {
 
         try {
             return parser == null ? null : parser.parse();
-        } catch (ReflectiveOperationException | IOException e) {
+        } catch (ReflectiveOperationException | XMLStreamException | IOException e) {
             throw new ServerException("Unable to parse config files: ", e);
         }
     }
@@ -31,6 +32,9 @@ public class ConfigLoader {
     public ConfigParser getParser(File file) {
         if (file.getName().endsWith(".properties"))
             return new PropertiesConfigParser(file);
+
+        if (file.getName().endsWith(".xml"))
+            return new XmlConfigParser(file);
 
         throw new ServerException("Unsupported file format");
     }
@@ -40,6 +44,11 @@ public class ConfigLoader {
 
         if (in != null)
             return new PropertiesConfigParser(in);
+
+        in = getClass().getClassLoader().getResourceAsStream("web-server.xml");
+
+        if (in != null)
+            return new XmlConfigParser(in);
 
         return null;
     }
