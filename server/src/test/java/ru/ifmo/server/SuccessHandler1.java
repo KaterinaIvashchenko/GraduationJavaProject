@@ -8,11 +8,9 @@ public class SuccessHandler1 implements Handler {
 
     public static final String TEST_RESPONSE = OPEN_HTML + "<html><body>Test response-1";
 
-
-
     @Override
     public void handle(Request request, Response response) throws Exception {
-        Thread.currentThread().sleep(3000);
+        Thread.currentThread().sleep(200);
         response.getOutputStream().write((OK_HEADER + TEST_RESPONSE + CLOSE_HTML).getBytes());
         response.getOutputStream().flush();
         multithreadingTest.isFinishedTrue();
