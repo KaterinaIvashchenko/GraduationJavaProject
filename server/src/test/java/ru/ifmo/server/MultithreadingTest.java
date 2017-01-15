@@ -14,7 +14,7 @@ import java.io.IOException;
 import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
 
-public class multithreadingTest {
+public class MultithreadingTest {
 
     private static final HttpHost host = new HttpHost("localhost", ServerConfig.DFLT_PORT);
 
