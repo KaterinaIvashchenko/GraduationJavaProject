@@ -12,6 +12,6 @@ public class SuccessHandler2 implements Handler {
     public void handle(Request request, Response response) throws Exception {
         response.getOutputStream().write((OK_HEADER + TEST_RESPONSE + CLOSE_HTML).getBytes());
         response.getOutputStream().flush();
-        multithreadingTest.isFinishedTrue();
+        MultithreadingTest.isFinishedTrue();
     }
 }

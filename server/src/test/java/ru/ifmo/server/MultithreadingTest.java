@@ -53,8 +53,6 @@ public class MultithreadingTest {
     @AfterClass
     public static void stop() {
         IOUtils.closeQuietly(server);
-        IOUtils.closeQuietly(client1);
-        IOUtils.closeQuietly(client2);
 
 
         server = null;
@@ -97,10 +95,10 @@ public class MultithreadingTest {
         assertEquals(false, isfinished); // Первый поток еще НЕ закончил свою работу.
 
         new Thread(new RequestHandler(client2, host, get2)).start(); // На этот запрос тайм-аут отсутствует
-        sleep(100); // Если этот тайм-аут сделать меньше или вообще убрать, то поток не успевает отработать
+        sleep(200); // Если этот тайм-аут сделать меньше или вообще убрать, то поток не успевает отработать
         assertEquals(true, isfinished); // Второй поток закончил свою работу
 
-        sleep(200); // Если этот тайм-аут сделать меньше, то мы получаем ошибку - java.lang.IllegalStateException: Connection pool shut down
+        sleep(400); // Если этот тайм-аут сделать меньше, то мы получаем ошибку - java.lang.IllegalStateException: Connection pool shut down
                           // отрабатывает метод IOUtils.closeQuietly(client1);
         assertEquals(false, isfinished); // Первый поток закончил свою работу.
 
