@@ -11,7 +11,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
 
 public class MultithreadingTest {
@@ -31,9 +30,8 @@ public class MultithreadingTest {
     static volatile boolean isfinished = false;
 
     public synchronized static void isFinishedTrue() {
-        isfinished = !isfinished;
+        isfinished = true;
     }
-
 
 
     @BeforeClass
@@ -54,17 +52,14 @@ public class MultithreadingTest {
     public static void stop() {
         IOUtils.closeQuietly(server);
 
-
         server = null;
-        client1 = null;
-        client2 = null;
-
 
         isfinished = false;
 
     }
 
-    public class RequestHandler implements Runnable {
+    public class RequestHandler {
+
         CloseableHttpClient client;
         HttpHost host;
         HttpGet get;
@@ -74,34 +69,88 @@ public class MultithreadingTest {
             this.host = host;
             this.get = get;
         }
+    }
 
+
+    public class Waiter implements Runnable {
+
+        private RequestHandler requestHandler;
+
+        public Waiter(RequestHandler rh) {
+            this.requestHandler = rh;
+        }
+
+        @Override
         public void run() {
+            synchronized (requestHandler) {
+                try {
+                    System.out.println("!!! before wait");
+                    requestHandler.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("!!! after wait");
+                assertEquals(true, isfinished);
+                isfinished = false;
 
-            try {
-                this.client.execute(this.host, this.get);
-            } catch (IOException e) {
-                System.out.println("Error trying to process request..");
-                e.printStackTrace();
             }
-
-
         }
     }
+
+    public class Notifier implements Runnable {
+
+        private RequestHandler requestHandler;
+
+        public Notifier(RequestHandler rh) {
+            this.requestHandler = rh;
+        }
+
+        @Override
+        public void run() {
+
+            synchronized (requestHandler) {
+                try {
+                    requestHandler.client.execute(this.requestHandler.host, this.requestHandler.get);
+                    Thread.currentThread().sleep(100);
+
+                    requestHandler.notify();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }
+
+    }
+
 
     @Test
     public void testProcessConnection() throws Exception {
 
-        new Thread(new RequestHandler(client1, host, get1)).start(); // На этот запрос стоит тайм-аут в 200 милисекунд
-        assertEquals(false, isfinished); // Первый поток еще НЕ закончил свою работу.
+        RequestHandler requestHandler1 = new RequestHandler(client1, host, get1);
+        RequestHandler requestHandler2 = new RequestHandler(client2, host, get2);
 
-        new Thread(new RequestHandler(client2, host, get2)).start(); // На этот запрос тайм-аут отсутствует
-        sleep(200); // Если этот тайм-аут сделать меньше или вообще убрать, то поток не успевает отработать
-        assertEquals(true, isfinished); // Второй поток закончил свою работу
+        Waiter waiter1 = new Waiter(requestHandler1);
+        new Thread(waiter1, "waiter1").start();
 
-        sleep(400); // Если этот тайм-аут сделать меньше, то мы получаем ошибку - java.lang.IllegalStateException: Connection pool shut down
-                          // отрабатывает метод IOUtils.closeQuietly(client1);
-        assertEquals(false, isfinished); // Первый поток закончил свою работу.
+        Waiter waiter2 = new Waiter(requestHandler2);
+        new Thread(waiter2, "waiter2").start();
+
+        Notifier notifier1 = new Notifier(requestHandler1);
+        new Thread(notifier1, "notifier1").start();
+
+        Notifier notifier2 = new Notifier(requestHandler2);
+        new Thread(notifier2, "notifier2").start();
+
+        Thread.currentThread().sleep(1000);
+
+
+
+
 
     }
 }
+
 
