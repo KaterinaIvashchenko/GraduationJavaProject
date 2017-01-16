@@ -92,23 +92,23 @@ public class Server implements Closeable {
     /**
      * Forces any content in the buffer to be written to the client
      */
-    static public void flushResponse (Response response) {
+    public static void flushResponse (Response response) {
         int statusCode = response.getStatusCode();
 
-        if (statusCode==0)
+        if (statusCode == 0)
             statusCode = SC_OK;
             response.setStatusCode(statusCode);
 
         try {
-            if (response.printWriter!=null)
+            if (response.printWriter != null)
                 response.printWriter.flush();
 
             int contentLength = 0;
-            if (response.bufferOutputStream!=null) {
+            if (response.bufferOutputStream != null) {
                 response.bufferOutputStream.flush();
                 contentLength = response.bufferOutputStream.size();
             }
-            if ((response.headers.get(HEADER_NAME_CONTENT_LENGTH)==null))
+            if ((response.headers.get(HEADER_NAME_CONTENT_LENGTH) == null))
                 response.setHeader(HEADER_NAME_CONTENT_LENGTH, String.valueOf(contentLength));
 
             OutputStream out = response.socket.getOutputStream();

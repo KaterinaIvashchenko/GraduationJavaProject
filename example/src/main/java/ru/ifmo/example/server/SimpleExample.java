@@ -4,6 +4,7 @@ import ru.ifmo.server.*;
 
 import java.awt.*;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -39,56 +40,52 @@ public class SimpleExample {
         @Override
         public void handle(Request request, Response response) throws Exception {
             // Set correct header
-            StringBuilder sb = new StringBuilder(Http.OK_HEADER);
+            PrintWriter pw = response.getWriter();
 
             // Set doctype
-            sb.append("<!DOCTYPE html>");
+            pw.append("<!DOCTYPE html>");
 
             // Write some HTML
-            sb.append("<html><body>");
+            pw.append("<html><body>");
 
-            sb.append("<p>http://localhost:8080/info.html").append("<br>");
-            sb.append("<p>Requested address: ").append(request.getPath()).append("<br>");
-            sb.append("<p>Request method: ").append(request.getMethod()).append("<br>");
+            pw.append("<p>http://localhost:8080/info.html").append("<br>");
+            pw.append("<p>Requested address: ").append(request.getPath()).append("<br>");
+            pw.append("<p>Request method: ").append(request.getMethod().toString()).append("<br>");
 
 
             Map<String, String> args = request.getArguments();
 
             if (!args.isEmpty()) {
-                sb.append("<p><strong>Passed arguments:</strong><br>");
+                pw.append("<p><strong>Passed arguments:</strong><br>");
 
                 for (Map.Entry<String, String> entry : args.entrySet()) {
-                    sb.append("Key: ").append(entry.getKey());
-                    sb.append(", Value: ").append(entry.getValue());
-                    sb.append("<br>");
+                    pw.append("Key: ").append(entry.getKey());
+                    pw.append(", Value: ").append(entry.getValue());
+                    pw.append("<br>");
                 }
 
-                sb.append("</p>");
+                pw.append("</p>");
             }
 
             Map<String, String> headers = request.getHeaders();
 
             if (!headers.isEmpty()) {
-                sb.append("<p><strong>Passed headers:</strong><br>");
+                pw.append("<p><strong>Passed headers:</strong><br>");
 
                 for (Map.Entry<String, String> entry : headers.entrySet()) {
-                    sb.append("Key: ").append(entry.getKey());
-                    sb.append(", Value: ").append(entry.getValue());
-                    sb.append("<br>");
+                    pw.append("Key: ").append(entry.getKey());
+                    pw.append(", Value: ").append(entry.getValue());
+                    pw.append("<br>");
                 }
 
-                sb.append("</p>");
+                pw.append("</p>");
             }
 
-            sb.append(" <iframe width=\"420\" height=\"315\"\n" +
+            pw.append(" <iframe width=\"420\" height=\"315\"\n" +
                     "src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\">\n" +
                     "</iframe> ");
 
-            sb.append("</body></html>");
-
-            // Write everything to output
-            response.getOutputStream().write(sb.toString().getBytes());
-            response.getOutputStream().flush();
+            pw.append("</body></html>");
         }
     }
 }

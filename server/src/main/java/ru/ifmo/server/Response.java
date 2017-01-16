@@ -26,19 +26,6 @@ public class Response {
     }
 
     /**
-     * @return {@link OutputStream} connected to the client.
-     */
-    @Deprecated
-    public OutputStream getOutputStream() {
-        try {
-            return socket.getOutputStream();
-        }
-        catch (IOException e) {
-            throw new ServerException("Cannot get output stream", e);
-        }
-    }
-
-    /**
      * Returns a buffered OutputStream suitable for writing binary data in the response. Need send responseto client exec method FlushBuffer
      * @return buffered ByteArrayOutputStream
      */
