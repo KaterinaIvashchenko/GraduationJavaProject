@@ -6,18 +6,14 @@ import ru.ifmo.server.util.Utils;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static ru.ifmo.server.Http.*;
-import static ru.ifmo.server.util.Utils.closeQuiet;
-import static ru.ifmo.server.util.Utils.htmlMessage;
 
 /**
  * Ifmo Web Server.
@@ -49,12 +45,8 @@ import static ru.ifmo.server.util.Utils.htmlMessage;
 public class Server implements Closeable {
     private static final char LF = '\n';
     private static final char CR = '\r';
-    private static final String CRLF = "" + CR + LF;
-    private static final char AMP = '&';
-    private static final char EQ = '=';
-    private static final char HEADER_VALUE_SEPARATOR = ':';
-    private static final char SPACE = ' ';
-    private static final int READER_BUF_SIZE = 1024;
+    public static final String CRLF = "" + CR + LF;
+    public static final char SPACE = ' ';
 
     private final ServerConfig config;
 
@@ -97,6 +89,45 @@ public class Server implements Closeable {
         }
     }
 
+    /**
+     * Forces any content in the buffer to be written to the client
+     */
+    public static void flushResponse (Response response) {
+        int statusCode = response.getStatusCode();
+
+        if (statusCode == 0)
+            statusCode = SC_OK;
+            response.setStatusCode(statusCode);
+
+        try {
+            if (response.printWriter != null)
+                response.printWriter.flush();
+
+            int contentLength = 0;
+            if (response.bufferOutputStream != null) {
+                response.bufferOutputStream.flush();
+                contentLength = response.bufferOutputStream.size();
+            }
+            if ((response.headers.get(HEADER_NAME_CONTENT_LENGTH) == null))
+                response.setHeader(HEADER_NAME_CONTENT_LENGTH, String.valueOf(contentLength));
+
+            OutputStream out = response.socket.getOutputStream();
+            out.write(("HTTP/1.0" + SPACE + statusCode + SPACE + statusNames[statusCode] + CRLF).getBytes());
+
+            for (String key:response.headers.keySet()) {
+                out.write((key+":"+SPACE+response.headers.get(key) + CRLF).getBytes());
+            }
+            out.write(CRLF.getBytes());
+            if (response.bufferOutputStream!=null)
+                out.write(response.bufferOutputStream.toByteArray());
+
+            out.flush();
+        } catch (IOException e) {
+            throw new ServerException("Cannot get output stream", e);
+        }
+
+    }
+
     private void openConnection() throws IOException {
         serverSocket = new ServerSocket(config.getPort());
     }
@@ -127,7 +158,9 @@ public class Server implements Closeable {
         Request req;
 
         try {
-            req = parseRequest(sock);
+            req = RequestParser.parseRequest(sock);
+
+            if (req == null) return;
 
             if (LOG.isDebugEnabled())
                 LOG.debug("Parsed request: {}", req);
@@ -155,18 +188,22 @@ public class Server implements Closeable {
             return;
         }
 
-        Handler handler = config.handler(req.getPath());
         Response resp = new Response(sock);
+
+        Dispatcher dispatcher = config.getDispatcher();
+
+        final String path = dispatcher != null ?  dispatcher.dispatch(req, resp) : req.getPath();
+
+        Handler handler = config.handler(path);
 
         if (handler != null) {
             try {
                 handler.handle(req, resp);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 if (LOG.isDebugEnabled())
                     LOG.error("Server error:", e);
-
-                respond(SC_SERVER_ERROR, "Server Error", htmlMessage(SC_SERVER_ERROR + " Server error"),
-                        sock.getOutputStream());
+                respond(SC_SERVER_ERROR,htmlMessage(SC_SERVER_ERROR + " Server error"),resp);
             }
         } else
             respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
@@ -226,7 +263,8 @@ public class Server implements Closeable {
                     key = query.substring(start, i);
 
                     start = i + 1;
-                } else if (key != null && (query.charAt(i) == AMP || last)) {
+                }
+                else if (key != null && (query.charAt(i) == AMP || last)) {
                     req.addArgument(key, query.substring(start, last ? i + 1 : i));
 
                     key = null;
@@ -284,6 +322,11 @@ public class Server implements Closeable {
         out.write(("HTTP/1.0" + SPACE + code + SPACE + statusMsg + CRLF + CRLF + content).getBytes());
         out.flush();
     }
+    static void respond(int code, String content, Response resp) throws IOException {
+        resp.setStatusCode(code);
+        resp.setBody(content.getBytes());
+        flushResponse(resp);
+    }
 
     /**
      * Invokes {@link #stop()}. Usable in try-with-resources.
@@ -295,7 +338,17 @@ public class Server implements Closeable {
     }
 
     private boolean isMethodSupported(HttpMethod method) {
-        return method == HttpMethod.GET;
+        switch (method) {
+            case GET:
+            case DELETE:
+            case HEAD:
+            case PUT:
+            case POST:
+                return true;
+
+            default:
+                return false;
+        }
     }
 
     private class ConnectionHandler implements Runnable {

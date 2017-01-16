@@ -8,21 +8,26 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_LENGTH;
+import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_TYPE;
+
 /**
  * Keeps request information: method, headers, params
  * and provides {@link java.io.InputStream} to get additional data
  * from client.
  */
 public class Request {
-    final Socket socket;
+    private final Socket socket;
     HttpMethod method;
     URI path;
 
-    Map<String, String> headers;
-    Map<String, String> args;
+    private RequestBody body;
+    private Map<String, String> headers;
+    private Map<String, String> args;
 
-    Request(Socket socket) {
+    public Request(Socket socket) {
         this.socket = socket;
+        body = new RequestBody();
     }
 
     /**
@@ -51,6 +56,13 @@ public class Request {
         return path.getPath();
     }
 
+    /**
+     * @return Request body.
+     */
+    public RequestBody getBody() {
+        return body;
+    }
+
     public Map<String, String> getHeaders() {
         if (headers == null)
             return Collections.emptyMap();
@@ -61,6 +73,12 @@ public class Request {
     void addHeader(String key, String value) {
         if (headers == null)
             headers = new LinkedHashMap<>();
+
+        if (HEADER_NAME_CONTENT_TYPE.equals(key))
+            body.contentType = value;
+
+        else if (HEADER_NAME_CONTENT_LENGTH.equals(key))
+            body.contentLength = Integer.parseInt(value);
 
         headers.put(key, value);
     }
@@ -88,6 +106,8 @@ public class Request {
                 "socket=" + socket +
                 ", method=" + method +
                 ", path=" + path +
+                ", Content-Type=" + body.getContentType() +
+                ", Content-Length=" + body.getContentLength() +
                 ", headers=" + headers +
                 ", args=" + args +
                 '}';

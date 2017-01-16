@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Simple example that shows basic usage.
  */
-public class SimpleExample {
+public class SimpleExampleWriter {
     public static void main(String[] args) throws URISyntaxException, IOException {
         Handler printHandler = new InfoHandler();
 
@@ -39,53 +39,63 @@ public class SimpleExample {
     private static class InfoHandler implements Handler {
         @Override
         public void handle(Request request, Response response) throws Exception {
-            // Set correct header
+            response.setContentType("text/html");
+
             PrintWriter pw = response.getWriter();
 
             // Set doctype
-            pw.append("<!DOCTYPE html>");
+            pw.println("<!DOCTYPE html>");
 
             // Write some HTML
-            pw.append("<html><body>");
+            pw.println("<html><body>");
 
-            pw.append("<p>http://localhost:8080/info.html").append("<br>");
-            pw.append("<p>Requested address: ").append(request.getPath()).append("<br>");
-            pw.append("<p>Request method: ").append(request.getMethod().toString()).append("<br>");
+            pw.println("<p>http://localhost:8080/info.html");
+            pw.println("<br>");
+            pw.println("<p>Requested address: ");
+            pw.println(request.getPath());
+            pw.println("<br>");
+            pw.println("<p>Request method: ");
+            pw.println(request.getMethod());
+            pw.println("<br>");
 
 
             Map<String, String> args = request.getArguments();
 
             if (!args.isEmpty()) {
-                pw.append("<p><strong>Passed arguments:</strong><br>");
+                pw.println("<p><strong>Passed arguments:</strong><br>");
 
                 for (Map.Entry<String, String> entry : args.entrySet()) {
-                    pw.append("Key: ").append(entry.getKey());
-                    pw.append(", Value: ").append(entry.getValue());
-                    pw.append("<br>");
+                    pw.println("Key: ");
+                    pw.print(entry.getKey());
+                    pw.println(", Value: ");
+                    pw.print(entry.getValue());
+                    pw.println("<br>");
                 }
 
-                pw.append("</p>");
+                pw.println("</p>");
             }
 
             Map<String, String> headers = request.getHeaders();
 
             if (!headers.isEmpty()) {
-                pw.append("<p><strong>Passed headers:</strong><br>");
+                pw.println("<p><strong>Passed headers:</strong><br>");
 
                 for (Map.Entry<String, String> entry : headers.entrySet()) {
-                    pw.append("Key: ").append(entry.getKey());
-                    pw.append(", Value: ").append(entry.getValue());
-                    pw.append("<br>");
+                    pw.println("Key: ");
+                    pw.print(entry.getKey());
+                    pw.println(", Value: ");
+                    pw.print(entry.getValue());
+                    pw.println("<br>");
                 }
 
-                pw.append("</p>");
+                pw.println("</p>");
             }
 
-            pw.append(" <iframe width=\"420\" height=\"315\"\n" +
+            pw.println(" <iframe width=\"420\" height=\"315\"\n" +
                     "src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\">\n" +
                     "</iframe> ");
 
-            pw.append("</body></html>");
+            pw.println("</body></html>");
         }
     }
 }
