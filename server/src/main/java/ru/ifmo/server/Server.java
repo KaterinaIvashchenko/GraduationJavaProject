@@ -305,7 +305,7 @@ public class Server implements Closeable {
                     Socket sock = serverSocket.accept();
                     sock.setSoTimeout(config.getSocketTimeout());
 
-                    connectionProcessingPool.submit(new RequestProcessor(sock));
+                     connectionProcessingPool.submit(new RequestProcessor(sock));
                 } catch (Exception e) {
                     if (!Thread.currentThread().isInterrupted())
                         LOG.error("Error accepting connection", e);
