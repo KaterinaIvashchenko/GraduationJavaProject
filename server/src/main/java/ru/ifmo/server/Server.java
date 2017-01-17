@@ -6,6 +6,7 @@ import ru.ifmo.server.annotation.URL;
 import ru.ifmo.server.util.Utils;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -67,6 +68,14 @@ public class Server implements Closeable {
     private Server(ServerConfig config) {
         this.config = new ServerConfig(config);
         classHandlers = new HashMap<>();
+    }
+
+    public static Server start() {
+        return start(new ConfigLoader().load());
+    }
+
+    public static Server start(File file) {
+        return start(new ConfigLoader().load(file));
     }
 
     /**

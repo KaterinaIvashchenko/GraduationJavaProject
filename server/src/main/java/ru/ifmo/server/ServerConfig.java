@@ -73,6 +73,13 @@ public class ServerConfig {
         return this;
     }
 
+    //А нужен ли нам этот метод?
+
+    public ServerConfig addHandlerClass(String path, Class<? extends Handler> cls) {
+
+        return this;
+    }
+
     /**
      * Add handler mappings.
      *
