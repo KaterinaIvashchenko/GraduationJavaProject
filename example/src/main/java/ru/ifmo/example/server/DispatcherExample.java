@@ -24,7 +24,6 @@ public class DispatcherExample {
 
             PrintWriter pw = response.getWriter();
             pw.print("Welcome to microservice!");
-            response.flushBuffer();
         }
     }
 

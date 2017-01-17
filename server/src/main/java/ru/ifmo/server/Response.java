@@ -9,71 +9,27 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static ru.ifmo.server.Http.SC_OK;
-import static ru.ifmo.server.Http.statusNames;
-import static ru.ifmo.server.Server.CRLF;
-import static ru.ifmo.server.Server.SPACE;
+import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_TYPE;
 
 /**
  * Provides {@link java.io.OutputStream} ro respond to client.
  */
 public class Response {
     final Socket socket;
-    private int statusCode;
-    private ByteArrayOutputStream bufferOutputStream;
-    private PrintWriter printWriter;
-    private Map<String,String> headers;
+    int statusCode;
+    ByteArrayOutputStream bufferOutputStream;
+    PrintWriter printWriter;
+    Map<String,String> headers = new LinkedHashMap<>();
 
     Response(Socket socket) {
         this.socket = socket;
     }
 
     /**
-     * Forces any content in the buffer to be written to the client
-     */
-    public void flushBuffer() {
-        if (statusCode==0)
-            statusCode = SC_OK;
-
-        try {
-            if (printWriter!=null)
-                printWriter.flush();
-            bufferOutputStream.flush();
-            if ((this.headers==null)||(this.headers.get("Content-Length")==null))
-                this.setHeader("Content-Length", String.valueOf(bufferOutputStream.size()));
-
-            OutputStream out = socket.getOutputStream();
-            out.write(("HTTP/1.0" + SPACE + statusCode + SPACE + statusNames[statusCode] + CRLF).getBytes());
-
-            for (String key:headers.keySet()) {
-                out.write((key+":"+SPACE+headers.get(key) + CRLF).getBytes());
-            }
-            out.write(CRLF.getBytes());
-            out.write(bufferOutputStream.toByteArray());
-            out.flush();
-        } catch (IOException e) {
-            throw new ServerException("Cannot get output stream", e);
-        }
-    }
-
-    /**
-     * @return {@link OutputStream} connected to the client.
-     */
-    @Deprecated
-    public OutputStream getOutputStream() {
-        try {
-            return socket.getOutputStream();
-        }
-        catch (IOException e) {
-            throw new ServerException("Cannot get output stream", e);
-        }
-    }
-
-    /**
      * Returns a buffered OutputStream suitable for writing binary data in the response. Need send responseto client exec method FlushBuffer
-     * @return buffered OutputStream
+     * @return buffered ByteArrayOutputStream
      */
-    public OutputStream getOutputStreamBuffer() {
+    public ByteArrayOutputStream getOutputStreamBuffer() {
         if (bufferOutputStream==null)
             bufferOutputStream = new ByteArrayOutputStream();
 
@@ -110,9 +66,6 @@ public class Response {
      * @param value String value header
      */
     public void setHeader(String name, String value) {
-        if (this.headers==null)
-            this.headers = new LinkedHashMap<>();
-
         this.headers.put(name,value);
     }
 
@@ -121,9 +74,6 @@ public class Response {
      * @param headers map name and value
      */
     public void setHeaders (Map<String, String> headers) {
-        if (this.headers==null)
-            this.headers = new LinkedHashMap<>();
-
         this.headers.putAll(headers);
     }
 
@@ -132,9 +82,6 @@ public class Response {
      * @return Map<String, String> headers
      */
     public Map<String, String> getHeaders() {
-        if (this.headers == null)
-            return Collections.emptyMap();
-
         return Collections.unmodifiableMap(this.headers);
     }
 
@@ -162,6 +109,6 @@ public class Response {
      * @param value String value Internet Media Types
      */
     public void setContentType(String value) {
-        setHeader("Content-Type",value);
+        setHeader(HEADER_NAME_CONTENT_TYPE,value);
     }
 }
