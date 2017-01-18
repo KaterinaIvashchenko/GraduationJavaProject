@@ -54,6 +54,7 @@ public class Server implements Closeable {
     private ServerSocket socket;
 
     private ExecutorService acceptorPool;
+    private ExecutorService multiThreadedPool;
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
@@ -144,6 +145,7 @@ public class Server implements Closeable {
      */
     public void stop() {
         acceptorPool.shutdownNow();
+        multiThreadedPool.shutdownNow();
         Utils.closeQuiet(socket);
 
         socket = null;
@@ -247,15 +249,50 @@ public class Server implements Closeable {
 
     private class ConnectionHandler implements Runnable {
         public void run() {
-            while (!Thread.currentThread().isInterrupted()) {
-                try (Socket sock = socket.accept()) {
-                    sock.setSoTimeout(config.getSocketTimeout());
+            multiThreadedPool = Executors.newCachedThreadPool();
 
-                    processConnection(sock);
-                }
-                catch (Exception e) {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    Socket sock = socket.accept();
+                    sock.setSoTimeout(config.getSocketTimeout());
+                    multiThreadedPool.submit(new NewConnection(sock));
+
+                } catch (Exception e) {
                     if (!Thread.currentThread().isInterrupted())
                         LOG.error("Error accepting connection", e);
+                }
+            }
+
+        }
+    }
+
+    private class NewConnection implements Runnable {
+        Socket sock;
+
+        NewConnection(Socket sock) {
+            this.sock = sock;
+        }
+
+        @Override
+        public void run() {
+
+            while (!Thread.currentThread().isInterrupted()) {
+
+                try {
+                    processConnection(sock);
+                } catch (IOException e) {
+                    LOG.error("Error input / output during data transfer", e);
+
+
+                } finally {
+                    try {
+                        sock.close();
+                        Thread.currentThread().interrupt();
+                    } catch (IOException e) {
+                        if (!Thread.currentThread().isInterrupted())
+                            LOG.error("Error accepting connection", e);
+                        LOG.error("Error closing the socket", e);
+                    }
                 }
             }
         }

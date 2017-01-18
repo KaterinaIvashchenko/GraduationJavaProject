@@ -10,9 +10,8 @@ public class SuccessHandler2 implements Handler {
 
     @Override
     public void handle(Request request, Response response) throws Exception {
-        MultithreadingTest.isFinishedTrue();
-        response.getOutputStream().write((OK_HEADER + TEST_RESPONSE + CLOSE_HTML).getBytes());
-        response.getOutputStream().flush();
+        MultithreadingTest.isFinishedClient2True();
+        response.setBody((OK_HEADER + TEST_RESPONSE + CLOSE_HTML).getBytes());
 
     }
 }

@@ -11,11 +11,30 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
 
 public class MultithreadingTest {
 
     private static final HttpHost host = new HttpHost("localhost", ServerConfig.DFLT_PORT);
+
+    private static final Object monitor = new Object();
+
+    private static void waitMonitor() {
+        synchronized (monitor){
+            try {
+                monitor.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void notifyMonitor() {
+        synchronized (monitor){
+                monitor.notify();
+        }
+    }
 
     private static final String SUCCESS_URL1 = "/test_success1";
     private static final String SUCCESS_URL2 = "/test_success2";
@@ -27,11 +46,18 @@ public class MultithreadingTest {
     private static CloseableHttpClient client1;
     private static CloseableHttpClient client2;
 
-    static volatile boolean isfinished = false;
+    static volatile boolean isFinishedClient1 = false;
+    static volatile boolean isFinishedClient2 = false;
 
-    public synchronized static void isFinishedTrue() {
-        isfinished = true;
+
+    public static void isFinishedClient1True() {
+        isFinishedClient1 = true;
     }
+
+    public static void isFinishedClient2True() {
+        isFinishedClient2 = true;
+    }
+
 
 
     @BeforeClass
@@ -51,15 +77,21 @@ public class MultithreadingTest {
     @AfterClass
     public static void stop() {
         IOUtils.closeQuietly(server);
+        IOUtils.closeQuietly(client1);
+        IOUtils.closeQuietly(client2);
+
 
         server = null;
+        client1 = null;
+        client2 = null;
 
-        isfinished = false;
+        isFinishedClient1 = false;
+        isFinishedClient2 = false;
+
 
     }
 
-    public class RequestHandler {
-
+    public class RequestHandler implements Runnable {
         CloseableHttpClient client;
         HttpHost host;
         HttpGet get;
@@ -69,86 +101,34 @@ public class MultithreadingTest {
             this.host = host;
             this.get = get;
         }
-    }
 
-
-    public class Waiter implements Runnable {
-
-        private RequestHandler requestHandler;
-
-        public Waiter(RequestHandler rh) {
-            this.requestHandler = rh;
-        }
-
-        @Override
-        public void run() {
-            synchronized (requestHandler) {
-                try {
-                    System.out.println("!!! before wait");
-                    requestHandler.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                System.out.println("!!! after wait");
-                assertEquals(true, isfinished);
-                isfinished = false;
-
-            }
-        }
-    }
-
-    public class Notifier implements Runnable {
-
-        private RequestHandler requestHandler;
-
-        public Notifier(RequestHandler rh) {
-            this.requestHandler = rh;
-        }
-
-        @Override
         public void run() {
 
-            synchronized (requestHandler) {
-                try {
-                    requestHandler.client.execute(this.requestHandler.host, this.requestHandler.get);
-                    Thread.currentThread().sleep(100);
-
-                    requestHandler.notify();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
+            try {
+                this.client.execute(this.host, this.get);
+            } catch (IOException e) {
+                System.out.println("Error trying to process request..");
+                e.printStackTrace();
             }
         }
-
     }
 
 
     @Test
     public void testProcessConnection() throws Exception {
 
-        RequestHandler requestHandler1 = new RequestHandler(client1, host, get1);
-        RequestHandler requestHandler2 = new RequestHandler(client2, host, get2);
+        new Thread(new RequestHandler(client1, host, get1)).start();
+        new Thread(new RequestHandler(client2, host, get2)).start();
 
-        Waiter waiter1 = new Waiter(requestHandler1);
-        new Thread(waiter1, "waiter1").start();
+        sleep(100);
 
-        Waiter waiter2 = new Waiter(requestHandler2);
-        new Thread(waiter2, "waiter2").start();
+        assertEquals(false, isFinishedClient1);
+        assertEquals(true, isFinishedClient2);
 
-        Notifier notifier1 = new Notifier(requestHandler1);
-        new Thread(notifier1, "notifier1").start();
+        waitMonitor();
 
-        Notifier notifier2 = new Notifier(requestHandler2);
-        new Thread(notifier2, "notifier2").start();
-
-        Thread.currentThread().sleep(1000);
-
-
-
-
+        assertEquals(true, isFinishedClient1);
+        assertEquals(true, isFinishedClient2);
 
     }
 }
