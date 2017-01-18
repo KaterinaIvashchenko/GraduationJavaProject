@@ -14,6 +14,7 @@ import java.util.Map;
  */
 public class SimpleExample {
     public static void main(String[] args) throws URISyntaxException, IOException {
+
         Handler printHandler = new InfoHandler();
 
         // Define config with request handlers
@@ -36,7 +37,7 @@ public class SimpleExample {
 
     }
 
-    private static class InfoHandler implements Handler {
+    public static class InfoHandler implements Handler {
         @Override
         public void handle(Request request, Response response) throws Exception {
             // Set correct header

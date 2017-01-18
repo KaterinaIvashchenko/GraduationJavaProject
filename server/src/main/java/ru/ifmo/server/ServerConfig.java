@@ -2,7 +2,12 @@ package ru.ifmo.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.ifmo.server.annotation.URL;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,14 +21,17 @@ public class ServerConfig {
 
     private int port = DFLT_PORT;
     private Map<String, Handler> handlers;
+    private Collection<Class<?>> classes;
     private int socketTimeout;
     private Dispatcher dispatcher;
 
+    private static final Logger LOG = LoggerFactory.getLogger(ServerConfig.class);
 
     private static final Logger LOG = LoggerFactory.getLogger(ServerConfig.class);
 
     public ServerConfig() {
         handlers = new HashMap<>();
+        classes = new ArrayList<>();
     }
 
     public ServerConfig(ServerConfig config) {
@@ -31,6 +39,7 @@ public class ServerConfig {
 
         port = config.port;
         handlers = new HashMap<>(config.handlers);
+        classes = new ArrayList<>(config.classes);
         socketTimeout = config.socketTimeout;
         dispatcher = config.dispatcher;
     }
@@ -63,6 +72,13 @@ public class ServerConfig {
      */
     public ServerConfig addHandler(String path, Handler handler) {
         handlers.put(path, handler);
+
+        return this;
+    }
+
+    //А нужен ли нам этот метод?
+
+    public ServerConfig addHandlerClass(String path, Class<? extends Handler> cls) {
 
         return this;
     }
@@ -119,11 +135,22 @@ public class ServerConfig {
         return this;
     }
 
+    public ServerConfig addClasses(Collection<Class<?>> classes) {
+        this.classes.addAll(classes);
+
+        return this;
+    }
+
+    public Collection<Class<?>> getClasses() {
+        return classes;
+    }
+
     @Override
     public String toString() {
         return "ServerConfig{" +
                 "port=" + port +
                 ", handlers=" + handlers +
+                ", classes=" + classes +
                 ", socketTimeout=" + socketTimeout +
                 ", dispatcher=" + dispatcher +
                 '}';
@@ -149,5 +176,4 @@ public class ServerConfig {
     public Dispatcher getDispatcher() {
         return dispatcher;
     }
-
 }

@@ -1,21 +1,26 @@
 
         package ru.ifmo.server;
 
-        import org.slf4j.Logger;
-        import org.slf4j.LoggerFactory;
-        import ru.ifmo.server.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.ifmo.server.annotation.URL;
+import ru.ifmo.server.util.Utils;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-        import java.io.Closeable;
-        import java.io.IOException;
-        import java.io.OutputStream;
-        import java.net.ServerSocket;
-        import java.net.Socket;
-        import java.net.URISyntaxException;
-        import java.util.concurrent.ExecutorService;
-        import java.util.concurrent.Executors;
-
-        import static ru.ifmo.server.Http.*;
-        import static ru.ifmo.server.util.Utils.htmlMessage;
+import static ru.ifmo.server.Http.*;
+import static ru.ifmo.server.util.Utils.htmlMessage;
 
 /**
  * Ifmo Web Server.
@@ -41,6 +46,7 @@
  * <p>
  *     To stop the server use {@link #stop()} or {@link #close()} methods.
  * </p>
+ *
  * @see ServerConfig
  */
 public class Server implements Closeable {
@@ -56,10 +62,21 @@ public class Server implements Closeable {
     private ExecutorService acceptorPool;
     private ExecutorService connectionProcessingPool;
 
+    private Map<String, ReflectHandler> classHandlers;
+
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
     private Server(ServerConfig config) {
         this.config = new ServerConfig(config);
+        classHandlers = new HashMap<>();
+    }
+
+    public static Server start() {
+        return start(new ConfigLoader().load());
+    }
+
+    public static Server start(File file) {
+        return start(new ConfigLoader().load(file));
     }
 
     /**
@@ -80,13 +97,14 @@ public class Server implements Closeable {
 
             Server server = new Server(config);
 
+            server.addScanClasses(config.getClasses());
+
             server.openConnection();
             server.startAcceptor();
 
             LOG.info("Server started on port: {}", config.getPort());
             return server;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new ServerException("Cannot start server on port: " + config.getPort());
         }
     }
@@ -151,6 +169,75 @@ public class Server implements Closeable {
         socket = null;
     }
 
+    private class ReflectHandler {
+        Method m;
+        Object obj;
+        EnumSet<HttpMethod> set;
+
+        ReflectHandler(Object obj, Method m, EnumSet<HttpMethod> set) {
+            assert m != null;
+            assert obj != null;
+            assert set != null && !set.isEmpty();
+
+            this.m = m;
+            this.obj = obj;
+            this.set = set;
+        }
+
+        boolean isApplicable(HttpMethod method) {
+            return set.contains(HttpMethod.ANY) || set.contains(method);
+        }
+    }
+
+    private void addScanClasses(Collection<Class<?>> classes) {
+        Collection<Class<?>> classList = new ArrayList<>(classes);
+
+        for (Class<?> c : classList) {
+            try {
+                String name = c.getName();
+                Class<?> cls = Class.forName(name);
+
+                for (Method method : cls.getDeclaredMethods()) {
+                    URL an = method.getAnnotation(URL.class);
+                    if (an != null) {
+                        Class<?>[] params = method.getParameterTypes();
+                        Class<?> methodType = method.getReturnType();
+
+                        if (params.length == 2 && methodType.equals(void.class) && Modifier.isPublic(method.getModifiers())
+                                && params[0].equals(Request.class) && params[1].equals(Response.class)) {
+                            String path = an.value();
+
+                            EnumSet<HttpMethod> set = EnumSet.copyOf(Arrays.asList(an.method()));
+
+                            ReflectHandler reflectHandler = new ReflectHandler(cls.newInstance(), method, set);
+                            classHandlers.put(path, reflectHandler);
+                        } else {
+                                throw new ServerException("Invalid @URL annotated method: " + c.getSimpleName() + "." + method.getName() + "(). "
+                                        + "Valid method: must be public void and accept only two arguments: Request and Response." + '\n' +
+                                    "Example: public void helloWorld(Request request, Response Response");
+                        }
+
+                    }
+                }
+            } catch (ReflectiveOperationException e) {
+                    throw new ServerException("Unable initialize @URL annotated handlers. ", e);
+            }
+        }
+    }
+
+    private void processReflectHandler(ReflectHandler rf, Request req, Response resp, Socket sock) throws IOException {
+        try {
+            rf.m.invoke(rf.obj, req, resp);
+            flushResponse(resp);
+        } catch (Exception e) { // Handle any user exception here.
+            if (LOG.isDebugEnabled())
+                LOG.error("Error invoke method:" + rf.m, e);
+
+            respond(SC_SERVER_ERROR, "Server Error", htmlMessage(SC_SERVER_ERROR + " Server error"),
+                    sock.getOutputStream());
+        }
+    }
+
     private void processConnection(Socket sock) throws IOException {
         if (LOG.isDebugEnabled())
             LOG.debug("Accepting connection on: {}", sock);
@@ -164,8 +251,7 @@ public class Server implements Closeable {
 
             if (LOG.isDebugEnabled())
                 LOG.debug("Parsed request: {}", req);
-        }
-        catch (URISyntaxException e) {
+        } catch (URISyntaxException e) {
             if (LOG.isDebugEnabled())
                 LOG.error("Malformed URL", e);
 
@@ -173,8 +259,7 @@ public class Server implements Closeable {
                     sock.getOutputStream());
 
             return;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error parsing request", e);
 
             respond(SC_SERVER_ERROR, "Server Error", htmlMessage(SC_SERVER_ERROR + " Server error"),
@@ -194,7 +279,7 @@ public class Server implements Closeable {
 
         Dispatcher dispatcher = config.getDispatcher();
 
-        final String path = dispatcher != null ?  dispatcher.dispatch(req, resp) : req.getPath();
+        final String path = dispatcher != null ? dispatcher.dispatch(req, resp) : req.getPath();
 
         Handler handler = config.handler(path);
 
@@ -208,16 +293,21 @@ public class Server implements Closeable {
                     LOG.error("Server error:", e);
                 respond(SC_SERVER_ERROR,htmlMessage(SC_SERVER_ERROR + " Server error"),resp);
             }
+        } else {
+            ReflectHandler reflectHandler = classHandlers.get(req.getPath());
+            if (reflectHandler != null && reflectHandler.isApplicable(req.method))
+                processReflectHandler(reflectHandler, req, resp, sock);
+            else
+                respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
+                        sock.getOutputStream());
         }
-        else
-            respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
-                    sock.getOutputStream());
     }
 
     static void respond(int code, String statusMsg, String content, OutputStream out) throws IOException {
         out.write(("HTTP/1.0" + SPACE + code + SPACE + statusMsg + CRLF + CRLF + content).getBytes());
         out.flush();
     }
+
     static void respond(int code, String content, Response resp) throws IOException {
         resp.setStatusCode(code);
         resp.setBody(content.getBytes());
@@ -280,18 +370,17 @@ public class Server implements Closeable {
 
                 try {
                     processConnection(sock);
-                } catch (IOException e) {
+                }
+               catch (IOException e) {
                     LOG.error("Error input / output during data transfer", e);
 
-
-                } finally {
+               } finally {
                     try {
                         sock.close();
                         Thread.currentThread().interrupt();
                     } catch (IOException e) {
-                        if (!Thread.currentThread().isInterrupted())
-                            LOG.error("Error accepting connection", e);
-                        LOG.error("Error closing the socket", e);
+                    if (!Thread.currentThread().isInterrupted())
+                        LOG.error("Error accepting connection", e);LOG.error("Error closing the socket", e);
                     }
                 }
             }
