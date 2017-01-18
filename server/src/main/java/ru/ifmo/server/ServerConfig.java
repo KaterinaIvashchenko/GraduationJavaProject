@@ -1,11 +1,5 @@
 package ru.ifmo.server;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import ru.ifmo.server.annotation.URL;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,10 +18,6 @@ public class ServerConfig {
     private Collection<Class<?>> classes;
     private int socketTimeout;
     private Dispatcher dispatcher;
-
-    private static final Logger LOG = LoggerFactory.getLogger(ServerConfig.class);
-
-    private static final Logger LOG = LoggerFactory.getLogger(ServerConfig.class);
 
     public ServerConfig() {
         handlers = new HashMap<>();
