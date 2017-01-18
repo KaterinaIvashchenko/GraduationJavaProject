@@ -2,11 +2,18 @@ package ru.ifmo.server;
 
 import org.junit.Test;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /** Tests for ConfigLoader */
 
@@ -30,14 +37,17 @@ public class ConfigLoaderTest {
 
     @Test
     public void testXml() throws Exception {
+        InputStream in = getClass().getClassLoader().getResourceAsStream("web-server.xml");
 
-        URL resourse = getClass().getClassLoader().getResource("web-server.xml");
+        assertNotNull(in);
 
-        assertNotNull(resourse);
+        File tmpFile = File.createTempFile("ifmo", ".xml");
 
-        File prop = new File(resourse.getFile());
+        tmpFile.deleteOnExit();
 
-        ServerConfig config = new ConfigLoader().load(prop);
+        Files.copy(in, tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+        ServerConfig config = new ConfigLoader().load(tmpFile);
 
         checkConfig(config);
     }
