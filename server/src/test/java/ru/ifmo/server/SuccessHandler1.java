@@ -13,7 +13,7 @@ public class SuccessHandler1 implements Handler {
     @Override
     public void handle(Request request, Response response) throws IOException {
         try {
-            Thread.sleep(300);
+            Thread.sleep(500);
         } catch (InterruptedException e) {
             System.out.println("Thread is Interrupted during sleep");
         }

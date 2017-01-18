@@ -54,7 +54,7 @@ public class Server implements Closeable {
     private ServerSocket socket;
 
     private ExecutorService acceptorPool;
-    private ExecutorService multiThreadedPool;
+    private ExecutorService connectionProcessingPool;
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
@@ -145,7 +145,7 @@ public class Server implements Closeable {
      */
     public void stop() {
         acceptorPool.shutdownNow();
-        multiThreadedPool.shutdownNow();
+        connectionProcessingPool.shutdownNow();
         Utils.closeQuiet(socket);
 
         socket = null;
@@ -249,13 +249,13 @@ public class Server implements Closeable {
 
     private class ConnectionHandler implements Runnable {
         public void run() {
-            multiThreadedPool = Executors.newCachedThreadPool();
+            connectionProcessingPool = Executors.newCachedThreadPool();
 
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     Socket sock = socket.accept();
                     sock.setSoTimeout(config.getSocketTimeout());
-                    multiThreadedPool.submit(new NewConnection(sock));
+                    connectionProcessingPool.submit(new NewConnection(sock));
 
                 } catch (Exception e) {
                     if (!Thread.currentThread().isInterrupted())

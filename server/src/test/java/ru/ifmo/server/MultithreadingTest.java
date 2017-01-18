@@ -11,7 +11,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
 
 public class MultithreadingTest {
@@ -118,9 +117,8 @@ public class MultithreadingTest {
     public void testProcessConnection() throws Exception {
 
         new Thread(new RequestHandler(client1, host, get1)).start();
-        new Thread(new RequestHandler(client2, host, get2)).start();
 
-        sleep(100);
+        new RequestHandler(client2, host, get2).run();
 
         assertEquals(false, isFinishedClient1);
         assertEquals(true, isFinishedClient2);
