@@ -78,8 +78,7 @@ public class PropertiesExample {
             sb.append("</body></html>");
 
             // Write everything to output
-            response.getOutputStream().write(sb.toString().getBytes());
-            response.getOutputStream().flush();
+            response.getWriter().write(sb.toString());
         }
     }
 }
