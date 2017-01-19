@@ -5,7 +5,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
@@ -24,19 +23,24 @@ public class ConfigLoaderTest {
     @Test
     public void testProperties() throws IOException {
 
-        URL resourse = getClass().getClassLoader().getResource("web-server.properties");
+        InputStream in = getClass().getClassLoader().getResourceAsStream("web-server.properties");
 
-        assertNotNull(resourse);
+        assertNotNull(in);
 
-        File prop = new File(resourse.getFile());
+        File tmpFile = File.createTempFile("ifmo", ".properties");
 
-        ServerConfig config = new ConfigLoader().load(prop);
+        tmpFile.deleteOnExit();
+
+        Files.copy(in, tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+        ServerConfig config = new ConfigLoader().load(tmpFile);
 
         checkConfig(config);
     }
 
     @Test
     public void testXml() throws Exception {
+
         InputStream in = getClass().getClassLoader().getResourceAsStream("web-server.xml");
 
         assertNotNull(in);
