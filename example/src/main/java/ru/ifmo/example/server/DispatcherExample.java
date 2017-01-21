@@ -2,9 +2,7 @@ package ru.ifmo.example.server;
 
 import ru.ifmo.server.*;
 
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.Writer;
 
 /**
  * Example for dispatch all reqest to one handler
@@ -24,15 +22,8 @@ public class DispatcherExample {
             response.setStatusCode(Http.SC_OK);
             response.setContentType("text/plain");
 
-//            response.setCookie(new Cookie("name", "name", "2000"));
-//            response.setCookie(new Cookie("surname", "surname"));
-//            response.setCookie(new Cookie("password", "12341", "2000"));
-
             PrintWriter pw = response.getWriter();
             pw.print("Welcome to microservice!");
-            response.flushBuffer();
-
-//            System.out.println(request.getCookies());
         }
     }
 

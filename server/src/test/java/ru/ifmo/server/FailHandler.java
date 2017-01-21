@@ -6,6 +6,7 @@ package ru.ifmo.server;
 public class FailHandler implements Handler {
     @Override
     public void handle(Request request, Response response) throws Exception {
+        int i=0;
         throw new Exception("Test exception");
     }
 }

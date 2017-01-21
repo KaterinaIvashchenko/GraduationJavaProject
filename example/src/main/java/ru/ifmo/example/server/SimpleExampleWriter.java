@@ -96,9 +96,6 @@ public class SimpleExampleWriter {
                     "</iframe> ");
 
             pw.println("</body></html>");
-
-            // Write everything to output
-            response.flushBuffer();
         }
     }
 }
