@@ -4,6 +4,8 @@ import ru.ifmo.server.*;
 
 import java.io.PrintWriter;
 
+import static ru.ifmo.server.ServerConfig.*;
+
 /**
  * Created by Gil on 12-Jan-17.
  */
@@ -12,15 +14,16 @@ public class CompressionExample {
     public static void main(String[] args) {
 
         ServerConfig config = new ServerConfig();
-//        config.setCompressionType(CompressionType.DEFLATE);
+        setCompressionType(CompressionType.GZIP);
 
         Handler handler = new Handler() {
             @Override
             public void handle(Request request, Response response) throws Exception {
+
                 response.setStatusCode(Http.SC_OK);
                 response.setContentType("text/html; charset=utf-8");
 
-                StringBuilder sb = new StringBuilder();
+                PrintWriter sb = response.getWriter();
 
                 sb.append("<!DOCTYPE html>");
                 sb.append("<html><body>");
@@ -37,10 +40,6 @@ public class CompressionExample {
                 }
                 sb.append("</p>");
                 sb.append("</body></html>");
-
-                PrintWriter pw = response.getWriter();
-                pw.print(sb.toString());
-                response.flushBuffer();
             }
         };
 

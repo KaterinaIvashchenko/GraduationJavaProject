@@ -1,5 +1,4 @@
-
-        package ru.ifmo.server;
+package ru.ifmo.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +8,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.ServerSocket;
@@ -18,6 +16,8 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.GZIPOutputStream;
 
 import static ru.ifmo.server.Http.*;
 import static ru.ifmo.server.util.Utils.htmlMessage;
@@ -63,6 +63,7 @@ public class Server implements Closeable {
     private ExecutorService connectionProcessingPool;
 
     private Map<String, ReflectHandler> classHandlers;
+    private static List<String> compressions;
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
@@ -112,7 +113,7 @@ public class Server implements Closeable {
     /**
      * Forces any content in the buffer to be written to the client
      */
-    public static void flushResponse (Response response) {
+    public static void flushResponse(Response response) {
         int statusCode = response.getStatusCode();
 
         if (statusCode == 0)
@@ -137,9 +138,8 @@ public class Server implements Closeable {
             for (String key:response.headers.keySet()) {
                 out.write((key+":"+SPACE+response.headers.get(key) + CRLF).getBytes());
             }
-            out.write(CRLF.getBytes());
-            if (response.bufferOutputStream!=null)
-                out.write(response.bufferOutputStream.toByteArray());
+
+            flushBody(response, out);
 
             out.flush();
         } catch (IOException e) {
@@ -186,6 +186,29 @@ public class Server implements Closeable {
 
         boolean isApplicable(HttpMethod method) {
             return set.contains(HttpMethod.ANY) || set.contains(method);
+        }
+    }
+
+    public static void flushBody(Response response, OutputStream out) throws IOException {
+        if (response.bufferOutputStream!=null) {
+            if (ServerConfig.getCompressionType() == CompressionType.GZIP && compressions.contains("gzip")) {
+                out.write(("Content-Encoding: gzip" + CRLF).getBytes());
+                out.write(CRLF.getBytes());
+                GZIPOutputStream gzipOutputStream = new GZIPOutputStream(out);
+                gzipOutputStream.write(response.bufferOutputStream.toByteArray());
+                gzipOutputStream.flush();
+                gzipOutputStream.finish();
+            } else if (ServerConfig.getCompressionType() == CompressionType.DEFLATE && compressions.contains("deflate")) {
+                out.write(("Content-Encoding: deflate" + CRLF).getBytes());
+                out.write(CRLF.getBytes());
+                DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(out);
+                deflaterOutputStream.write(response.bufferOutputStream.toByteArray());
+                deflaterOutputStream.flush();
+                deflaterOutputStream.finish();
+            } else {
+                out.write(CRLF.getBytes());
+                out.write(response.bufferOutputStream.toByteArray());
+            }
         }
     }
 
@@ -274,6 +297,8 @@ public class Server implements Closeable {
 
             return;
         }
+
+        compressions = req.getAviableCompressions();
 
         Response resp = new Response(sock);
 

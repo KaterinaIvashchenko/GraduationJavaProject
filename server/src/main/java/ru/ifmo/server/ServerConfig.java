@@ -18,6 +18,15 @@ public class ServerConfig {
     private Collection<Class<?>> classes;
     private int socketTimeout;
     private Dispatcher dispatcher;
+    private static CompressionType compressionType;
+
+    public static CompressionType getCompressionType() {
+        return compressionType;
+    }
+
+    public static synchronized void setCompressionType(CompressionType cType) {
+        compressionType = cType;
+    }
 
     public ServerConfig() {
         handlers = new HashMap<>();
