@@ -26,7 +26,7 @@ public class SessionListener implements Runnable {
                         LOG.info("Deleting session '" + entry.getKey() + "'. Goodbye " + entry.getValue().getParam("name") + " " + entry.getValue().getParam("surname"));
                         entry.getValue().setExpired(true);
                         Server.removeSession(entry.getKey());
-                        LOG.info("Sessions map after delete: " + Server.getSessions());
+//                        LOG.info("Sessions map after delete: " + Server.getSessions());
                     }
                 }
             } catch (InterruptedException e) {

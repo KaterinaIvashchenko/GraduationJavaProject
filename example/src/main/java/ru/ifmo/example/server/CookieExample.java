@@ -10,7 +10,6 @@ import java.io.PrintWriter;
 public class CookieExample {
 
 
-
     public static void main(String[] args) {
 
         Handler handler = new Handler() {
@@ -21,9 +20,7 @@ public class CookieExample {
                 String surname = request.getArguments().get("surname");
                 String password = request.getArguments().get("password");
 
-                PrintWriter writer = response.getWriter();
-
-                StringBuilder sb = new StringBuilder();
+                PrintWriter sb = response.getWriter();
 
                 sb.append("<!DOCTYPE html>");
                 sb.append("<html><body>");
@@ -46,11 +43,10 @@ public class CookieExample {
                 } else {
 
                     Session session = request.getSession();
-                    response.setCookie(new Cookie("JSESSIONID", session.getId()));
 
-                    session.setParams("name", name);
-                    session.setParams("surname", surname);
-                    session.setParams("password", password);
+                    session.setParam("name", name);
+                    session.setParam("surname", surname);
+                    session.setParam("password", password);
 
                     sb.append("<p><a href=\"./page1\">to Page 1</a>&nbsp;");
                     sb.append("<a href=\"./page2\">to Page 2</a></p>");
@@ -59,10 +55,6 @@ public class CookieExample {
 
                 sb.append("</body></html>");
 
-                writer.print(sb.toString());
-
-                response.flushBuffer();
-//                System.out.println(Server.getSessions());
             }
         };
         Handler handler2 = new Handler() {
@@ -70,15 +62,12 @@ public class CookieExample {
             public void handle(Request request, Response response) throws Exception {
 
                 Session session = request.getSession();
-                response.setCookie(new Cookie("JSESSIONID", session.getId()));
 
-                String name = session.getParams("name");
-                String surname = session.getParams("surname");
-                String password = session.getParams("password");
+                String name = session.getParam("name");
+                String surname = session.getParam("surname");
+                String password = session.getParam("password");
 
-                PrintWriter writer = response.getWriter();
-
-                StringBuilder sb = new StringBuilder();
+                PrintWriter sb = response.getWriter();
 
                 sb.append("<!DOCTYPE html>");
                 sb.append("<html><body>");
@@ -93,10 +82,6 @@ public class CookieExample {
                 sb.append("<a href=\"./logout\">Exit</a></p>");
                 sb.append("</body></html>");
 
-                writer.print(sb.toString());
-
-                response.flushBuffer();
-//                System.out.println(Server.getSessions());
             }
         };
         Handler handler3 = new Handler() {
@@ -104,15 +89,12 @@ public class CookieExample {
             public void handle(Request request, Response response) throws Exception {
 
                 Session session = request.getSession();
-                response.setCookie(new Cookie("JSESSIONID", session.getId()));
 
-                String name = session.getParams("name");
-                String surname = session.getParams("surname");
-                String password = session.getParams("password");
+                String name = session.getParam("name");
+                String surname = session.getParam("surname");
+                String password = session.getParam("password");
 
-                PrintWriter writer = response.getWriter();
-
-                StringBuilder sb = new StringBuilder();
+                PrintWriter sb = response.getWriter();
 
                 sb.append("<!DOCTYPE html>");
                 sb.append("<html><body>");
@@ -127,10 +109,6 @@ public class CookieExample {
                 sb.append("<a href=\"./logout\">Exit</a></p>");
                 sb.append("</body></html>");
 
-                writer.print(sb.toString());
-
-                response.flushBuffer();
-//                System.out.println(Server.getSessions());
             }
         };
         Handler handler4 = new Handler() {
@@ -141,13 +119,11 @@ public class CookieExample {
 
                 session.invalidate();
 
-                String name = session.getParams("name");
-                String surname = session.getParams("surname");
-                String password = session.getParams("password");
+                String name = session.getParam("name");
+                String surname = session.getParam("surname");
+                String password = session.getParam("password");
 
-                PrintWriter writer = response.getWriter();
-
-                StringBuilder sb = new StringBuilder();
+                PrintWriter sb = response.getWriter();
 
                 sb.append("<!DOCTYPE html>");
                 sb.append("<html><body>");
@@ -161,10 +137,6 @@ public class CookieExample {
                 sb.append("<a href=\"./login\">Login</a></p>");
                 sb.append("</body></html>");
 
-                writer.print(sb.toString());
-
-                response.flushBuffer();
-//                System.out.println(Server.getSessions());
             }
         };
 
