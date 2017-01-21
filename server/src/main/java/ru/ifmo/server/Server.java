@@ -2,12 +2,15 @@
         package ru.ifmo.server;
 
 import com.sun.activation.registries.MimeTypeFile;
+import org.apache.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.ifmo.server.annotation.URL;
 import ru.ifmo.server.util.Utils;
 
 
+
+import javax.activation.MimetypesFileTypeMap;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -172,6 +175,41 @@ public class Server implements Closeable {
 
         socket = null;
     }
+    private void setContentTypeHeader(Response response, File file) {
+        String mimeType = null;
+        String filePath = file.getPath();
+
+        int idx = filePath.lastIndexOf('.');
+        if (idx == -1) {
+            mimeType = "application/octet-stream";
+        } else {
+            String fileExtension = filePath.substring(idx).toLowerCase();
+
+            // Try common types first
+            if (fileExtension.equals(".html")) {
+                mimeType = "text/html";
+            } else if (fileExtension.equals(".css")) {
+                mimeType = "text/css";
+            } else if (fileExtension.equals(".js")) {
+                mimeType = "application/javascript";
+            } else if (fileExtension.equals(".gif")) {
+                mimeType = "image/gif";
+            } else if (fileExtension.equals(".png")) {
+                mimeType = "image/png";
+            } else if (fileExtension.equals(".txt")) {
+                mimeType = "text/plain";
+            } else if (fileExtension.equals(".xml")) {
+                mimeType = "application/xml";
+            } else if (fileExtension.equals(".json")) {
+                mimeType = "application/json";
+            } else {
+                MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
+                mimeType = mimeTypesMap.getContentType(file.getPath());
+            }
+        }
+
+        response.setHeader(MIME_IMAGE_JPEG, mimeType);
+    }
 
     private class ReflectHandler {
         Method m;
@@ -288,8 +326,11 @@ public class Server implements Closeable {
         Handler handler = config.handler(path);
 
 
-        resp.setContentType("image/.jpg");
-        new File("resources/1.jpg").length();
+        resp.setContentType("image/jpg");
+        new File("D:\\JavaCourse2\\GraduationJavaProject\\example\\src\\main\\resources\\1.jpg").length();
+
+
+
 
 
 

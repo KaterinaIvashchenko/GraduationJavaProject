@@ -29,7 +29,11 @@ public class Http {
 
     // Mime types
     public static final String MIME_TEXT_PLAIN = "text/plain";
+    public static final String MIME_IMAGE_GIF= "image/gif";
+    public static final String MIME_IMAGE_JPEG = "image/jpeg";
+    public static final String MIME_TEXT_HTML = "text/html";
     public static final String MIME_URL_ENCODED = "application/x-www-form-urlencoded";
+    public static final String MIME_APPLICATION_PDF = "application/pdf";
 
 
     /** OK header that preceded rest response data. */
