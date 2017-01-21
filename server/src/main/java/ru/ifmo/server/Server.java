@@ -9,17 +9,18 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static ru.ifmo.server.Http.*;
+import static ru.ifmo.server.Session.SESSION_COOKIENAME;
 import static ru.ifmo.server.util.Utils.htmlMessage;
 
 /**
@@ -62,6 +63,8 @@ public class Server implements Closeable {
     private ExecutorService acceptorPool;
     private ExecutorService connectionProcessingPool;
 
+    private static Map<String, Session> sessions = new ConcurrentHashMap<>();
+
     private Map<String, ReflectHandler> classHandlers;
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
@@ -69,6 +72,26 @@ public class Server implements Closeable {
     private Server(ServerConfig config) {
         this.config = new ServerConfig(config);
         classHandlers = new HashMap<>();
+    }
+
+    public static Map<String, Session> getSessions() {
+        return sessions;
+    }
+
+    public static synchronized void setSessions(String key, Session session) {
+        Server.sessions.put(key, session);
+    }
+
+    public static synchronized void removeSession(String key) {
+        Server.sessions.remove(key);
+    }
+
+    private void listenSessions() throws IOException {
+        SessionListener sessionListener = new SessionListener();
+        Thread lisThread = new Thread(sessionListener);
+        lisThread.start();
+
+        LOG.info("Session listener started, deleting by timeout.");
     }
 
     public static Server start() {
@@ -103,6 +126,9 @@ public class Server implements Closeable {
             server.startAcceptor();
 
             LOG.info("Server started on port: {}", config.getPort());
+
+            server.listenSessions();
+
             return server;
         } catch (IOException e) {
             throw new ServerException("Cannot start server on port: " + config.getPort());
@@ -137,6 +163,14 @@ public class Server implements Closeable {
             for (String key:response.headers.keySet()) {
                 out.write((key+":"+SPACE+response.headers.get(key) + CRLF).getBytes());
             }
+
+            if (response.setCookies != null) {
+                for (String cookie : response.setCookies) {
+                    out.write(("Set-Cookie:" + SPACE + cookie + CRLF).getBytes());
+                }
+                response.setCookies.clear();
+            }
+
             out.write(CRLF.getBytes());
             if (response.bufferOutputStream!=null)
                 out.write(response.bufferOutputStream.toByteArray());
@@ -156,6 +190,12 @@ public class Server implements Closeable {
         acceptorPool = Executors.newSingleThreadExecutor(new ServerThreadFactory("con-acceptor"));
 
         acceptorPool.submit(new ConnectionHandler());
+    }
+
+    private void sendSessionCookie(Request req, Response resp) {
+        if (req.getSession() != null) {
+            resp.setCookie(new Cookie(SESSION_COOKIENAME, req.getSession().getId()));
+        }
     }
 
     /**
@@ -286,6 +326,7 @@ public class Server implements Closeable {
         if (handler != null) {
             try {
                 handler.handle(req, resp);
+                sendSessionCookie(req, resp);
                 flushResponse(resp);
             }
             catch (Exception e) {
