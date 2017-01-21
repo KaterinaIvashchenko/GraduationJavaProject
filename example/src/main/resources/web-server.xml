@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<config>
+    <port>8081</port>
+    <socketTimeout>5000</socketTimeout>
+    <handlers>
+        <handler url="/success">ru.ifmo.example.server.PropertiesExample$SuccessHandler</handler>
+    </handlers>
+</config>

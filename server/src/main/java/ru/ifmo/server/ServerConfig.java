@@ -1,7 +1,10 @@
 package ru.ifmo.server;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
 
 /**
  * Holds server configs: local port, handler mappings, etc.
@@ -12,20 +15,13 @@ public class ServerConfig {
 
     private int port = DFLT_PORT;
     private Map<String, Handler> handlers;
+    private Collection<Class<?>> classes;
     private int socketTimeout;
     private Dispatcher dispatcher;
-    private static CompressionType compressionType;
-
-    public static CompressionType getCompressionType() {
-        return compressionType;
-    }
-
-    public void setCompressionType(CompressionType compressionType) {
-        this.compressionType = compressionType;
-    }
 
     public ServerConfig() {
         handlers = new HashMap<>();
+        classes = new ArrayList<>();
     }
 
     public ServerConfig(ServerConfig config) {
@@ -33,6 +29,7 @@ public class ServerConfig {
 
         port = config.port;
         handlers = new HashMap<>(config.handlers);
+        classes = new ArrayList<>(config.classes);
         socketTimeout = config.socketTimeout;
         dispatcher = config.dispatcher;
     }
@@ -69,6 +66,13 @@ public class ServerConfig {
         return this;
     }
 
+    //А нужен ли нам этот метод?
+
+    public ServerConfig addHandlerClass(String path, Class<? extends Handler> cls) {
+
+        return this;
+    }
+
     /**
      * Add handler mappings.
      *
@@ -80,6 +84,7 @@ public class ServerConfig {
 
         return this;
     }
+
 
     Handler handler(String path) {
         return handlers.get(path);
@@ -120,11 +125,22 @@ public class ServerConfig {
         return this;
     }
 
+    public ServerConfig addClasses(Collection<Class<?>> classes) {
+        this.classes.addAll(classes);
+
+        return this;
+    }
+
+    public Collection<Class<?>> getClasses() {
+        return classes;
+    }
+
     @Override
     public String toString() {
         return "ServerConfig{" +
                 "port=" + port +
                 ", handlers=" + handlers +
+                ", classes=" + classes +
                 ", socketTimeout=" + socketTimeout +
                 ", dispatcher=" + dispatcher +
                 '}';
@@ -150,5 +166,4 @@ public class ServerConfig {
     public Dispatcher getDispatcher() {
         return dispatcher;
     }
-
 }
