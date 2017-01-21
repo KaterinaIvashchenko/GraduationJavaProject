@@ -8,6 +8,8 @@ import java.util.*;
 
 import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_LENGTH;
 import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_TYPE;
+import static ru.ifmo.server.Session.SESSION_COOKIENAME;
+import static ru.ifmo.server.Session.SESSION_LIVETIME;
 
 /**
  * Keeps request information: method, headers, params
@@ -118,6 +120,7 @@ public class Request {
         return Collections.unmodifiableList(cookies);
     }
 
+
     public String getCookieValue(String cookiename) {
 
         if (cookies == null) {
@@ -134,7 +137,7 @@ public class Request {
         } else return null;
     }
 
-    private Boolean containsJSIDCookie() {
+    private boolean containsJSIDCookie() {
 
         Boolean flag = false;
 
@@ -143,23 +146,25 @@ public class Request {
         }
         if (cookies != null) {
             for (Cookie currentCookie : cookies) {
-                if (currentCookie.name.equals("JSESSIONID")) {
+                if (currentCookie.name.equals(SESSION_COOKIENAME)) {
                     flag = true; }
             }
         }
         return flag;
     }
 
-
     public Session getSession() {
-        if (!containsJSIDCookie()) {
+        if (session == null) {
+            session = getSession(false);
+        }
+        return session;
+    }
+
+    public Session getSession(boolean create) {
+        if (!containsJSIDCookie() || create == true) {
             session = new Session();
-            String uniqSid = Session.generateSID();
-            session.setId(uniqSid);
-            session.setExpire(1);
-            Server.setSessions(uniqSid, session);
         } else {
-            session = Server.getSessions().get(getCookieValue("JSESSIONID"));
+            session = Server.getSessions().get(getCookieValue(SESSION_COOKIENAME));
             if (session == null) {
                 session = getSession(true);
             }
@@ -167,14 +172,6 @@ public class Request {
         return session;
     }
 
-    public Session getSession(Boolean create) {
-            session = new Session();
-            String uniqSid = Session.generateSID();
-            session.setId(uniqSid);
-            session.setExpire(1);
-            Server.setSessions(uniqSid, session);
-        return session;
-    }
 
     @Override
     public String toString() {

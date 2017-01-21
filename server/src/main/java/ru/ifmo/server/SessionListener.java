@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
-import java.util.Iterator;
 import java.util.Map;
 
 
@@ -22,16 +21,14 @@ public class SessionListener implements Runnable {
 
                 for (Map.Entry<String, Session> entry : Server.getSessions().entrySet()) {
                     LocalDateTime ltnow = LocalDateTime.now();
-                    Thread.currentThread().sleep(1000);
+                    Thread.sleep(1000);
                     if (entry.getValue().getExpire() != null && ltnow.isAfter(entry.getValue().getExpire())) {
-                        LOG.info("Deleting session '" + entry.getKey() + "'. Goodbye " + entry.getValue().getParams("name") + " " + entry.getValue().getParams("surname"));
+                        LOG.info("Deleting session '" + entry.getKey() + "'. Goodbye " + entry.getValue().getParam("name") + " " + entry.getValue().getParam("surname"));
+                        entry.getValue().setExpired(true);
                         Server.removeSession(entry.getKey());
-//                        LOG.info("Sessions map after delete: " + Server.getSessions());
+                        LOG.info("Sessions map after delete: " + Server.getSessions());
                     }
                 }
-            }
-            catch (NullPointerException e) {
-                    e.printStackTrace();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
