@@ -11,11 +11,12 @@ import java.io.Writer;
 public class HelloWorldExample {
     public static void main(String[] args) {
         ServerConfig config = new ServerConfig()
-                .addHandler("/index", new Handler() {
+                .addHandler("/1.jpg", new Handler() {
                     @Override
                     public void handle(Request request, Response response) throws Exception {
                         Writer writer = response.getWriter();
                         writer.write("Hello World!");
+
                     }
                 });
 

@@ -1,10 +1,13 @@
 
         package ru.ifmo.server;
 
+import com.sun.activation.registries.MimeTypeFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.ifmo.server.annotation.URL;
 import ru.ifmo.server.util.Utils;
+
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolver.length;
 import static ru.ifmo.server.Http.*;
 import static ru.ifmo.server.util.Utils.htmlMessage;
 
@@ -282,6 +286,13 @@ public class Server implements Closeable {
         final String path = dispatcher != null ? dispatcher.dispatch(req, resp) : req.getPath();
 
         Handler handler = config.handler(path);
+
+
+        resp.setContentType("image/.jpg");
+        new File("resources/1.jpg").length();
+
+
+
 
         if (handler != null) {
             try {
