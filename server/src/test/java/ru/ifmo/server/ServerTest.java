@@ -187,7 +187,7 @@ public class ServerTest {
         HttpGet req = new HttpGet(SESSION_URL);
 
         CloseableHttpResponse response = client.execute(host, req);
-        assert(response.toString().contains("JSESSIONID=" + Server.getSessions().keySet().iterator().next()));
+        assertTrue(response.toString().contains("JSESSIONID=" + Server.getSessions().keySet().iterator().next()));
     }
 
     @Test
