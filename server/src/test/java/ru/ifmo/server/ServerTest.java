@@ -276,7 +276,7 @@ public class ServerTest {
         HttpRequest request = new HttpGet(COMPRESS_URL);
 
         CloseableHttpResponse response = client.execute(host, request);
-        assert(CompressHandler.aviableCompressions.contains(ServerConfig.getCompressionType().toString().toLowerCase()));
+        assertTrue(CompressHandler.aviableCompressions.contains(ServerConfig.getCompressionType().toString().toLowerCase()));
         assertStatusCode(HttpStatus.SC_OK, response);
     }
 
