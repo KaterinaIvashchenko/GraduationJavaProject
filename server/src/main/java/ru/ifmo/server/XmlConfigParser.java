@@ -61,7 +61,9 @@ public class XmlConfigParser extends AbstractConfigParser {
                     Handler handler = (Handler) Class.forName(val).newInstance();
                     config.addHandler(url, handler);
 
-                } else if ("handlers".equals(qName)) {
+                } else if ("scanclass".equals(qName)) {
+                    config.addClass(Class.forName(val));
+                } else if ("handlers".equals(qName) || "scanclasses".equals(qName)) {
                     continue;
 
                 } else {
