@@ -277,6 +277,7 @@ public class ServerTest {
 
         CloseableHttpResponse response = client.execute(host, request);
         assert(CompressHandler.aviableCompressions.contains(ServerConfig.getCompressionType().toString().toLowerCase()));
+        assertStatusCode(HttpStatus.SC_OK, response);
     }
 
     @Test
