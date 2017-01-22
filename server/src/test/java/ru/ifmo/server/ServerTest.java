@@ -1,16 +1,16 @@
 package ru.ifmo.server;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpStatus;
+import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.junit.*;
 
@@ -36,6 +36,7 @@ public class ServerTest {
     private static final String NOT_FOUND_URL = "/test_not_found";
     private static final String SERVER_ERROR_URL = "/test_fail";
     private static final String TEXT_PLAIN_URL = "/test_text_plain";
+    private static final String SESSION_URL = "/test_session";
 
     private static Server server;
     private CloseableHttpClient client;
@@ -51,6 +52,7 @@ public class ServerTest {
                 .addHandler(SERVER_ERROR_URL, new FailHandler())
                 .addHandler(TEXT_PLAIN_URL, new TextPlainHandler())
                 .addHandler(SERVER_ERROR_URL, new FailHandler())
+                .addHandler(SESSION_URL, new SessionHandler())
                 .addHandler(DispatcherTest.DISPATCHED_URL,new DispatchHandler())
                 .setDispatcher(new DispatcherTest())
                 .addClasses(classes);
@@ -180,6 +182,13 @@ public class ServerTest {
         assertNotNull(EntityUtils.toString(response.getEntity()));
     }
 
+    @Test
+    public void testSession() throws Exception {
+        HttpGet req = new HttpGet(SESSION_URL);
+
+        CloseableHttpResponse response = client.execute(host, req);
+        assert(response.toString().contains("JSESSIONID=" + Server.getSessions().keySet().iterator().next()));
+    }
 
     @Test
     public void testServerError() throws Exception {
@@ -190,8 +199,6 @@ public class ServerTest {
         assertStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR, response);
         assertNotNull(EntityUtils.toString(response.getEntity()));
     }
-
-
 
     @Test
     public void testDelete() throws Exception {
