@@ -327,7 +327,11 @@ public class Server implements Closeable {
 
 
         resp.setContentType("image/jpg");
-        new File("D:\\JavaCourse2\\GraduationJavaProject\\example\\src\\main\\resources\\1.jpg").length();
+
+       File a =  new File("src/main/java/ru.ifmo.example.server/resources/1.jpg");
+        resp.setHeader(".jpg",MIME_IMAGE_JPEG);
+        resp.getOutputStreamBuffer();
+        resp.setContentType(MIME_IMAGE_JPEG);
 
 
 
