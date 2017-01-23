@@ -10,6 +10,7 @@ import java.io.Writer;
  */
 public class HelloWorldExample {
     public static void main(String[] args) {
+
         ServerConfig config = new ServerConfig()
                 .addHandler("/1.jpg", new Handler() {
                     @Override

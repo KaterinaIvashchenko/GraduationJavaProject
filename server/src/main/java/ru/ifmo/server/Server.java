@@ -328,11 +328,17 @@ public class Server implements Closeable {
 
         resp.setContentType("image/jpg");
 
-       File a =  new File("src/main/java/ru.ifmo.example.server/resources/1.jpg");
+        File a =  new File("src/main/java/ru.ifmo.example.server/resources/1.jpg");
         resp.setHeader(".jpg",MIME_IMAGE_JPEG);
         resp.getOutputStreamBuffer();
         resp.setContentType(MIME_IMAGE_JPEG);
 
+        ServerConfig serverConfig = new ServerConfig();
+        serverConfig.setWorkDir(a);
+        System.out.println(a.getAbsolutePath());
+
+
+        //if(serverConfig.handler(a.toString()).equals(a.getAbsoluteFile()))
 
 
 
@@ -340,6 +346,7 @@ public class Server implements Closeable {
 
 
         if (handler != null) {
+
             try {
                 handler.handle(req, resp);
                 flushResponse(resp);

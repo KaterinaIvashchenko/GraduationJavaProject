@@ -1,5 +1,6 @@
 package ru.ifmo.server;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,6 +19,15 @@ public class ServerConfig {
     private Collection<Class<?>> classes;
     private int socketTimeout;
     private Dispatcher dispatcher;
+    private File file;
+
+    public File getFile() {
+        return file;
+    }
+
+    public void setFile(File file) {
+        this.file = file;
+    }
 
     public ServerConfig() {
         handlers = new HashMap<>();
@@ -32,6 +42,10 @@ public class ServerConfig {
         classes = new ArrayList<>(config.classes);
         socketTimeout = config.socketTimeout;
         dispatcher = config.dispatcher;
+    }
+
+    public File setWorkDir(File file) {
+        return this.file;
     }
 
     /**
