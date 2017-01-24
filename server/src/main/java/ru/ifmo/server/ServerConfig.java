@@ -15,12 +15,14 @@ public class ServerConfig {
 
     private int port = DFLT_PORT;
     private Map<String, Handler> handlers;
+    private Map<String, Class<? extends Handler>> userHandlersClasses;
     private Collection<Class<?>> classes;
     private int socketTimeout;
     private Dispatcher dispatcher;
 
     public ServerConfig() {
         handlers = new HashMap<>();
+        userHandlersClasses = new HashMap<>();
         classes = new ArrayList<>();
     }
 
@@ -29,6 +31,7 @@ public class ServerConfig {
 
         port = config.port;
         handlers = new HashMap<>(config.handlers);
+        userHandlersClasses = new HashMap<>(config.userHandlersClasses);
         classes = new ArrayList<>(config.classes);
         socketTimeout = config.socketTimeout;
         dispatcher = config.dispatcher;
@@ -66,12 +69,18 @@ public class ServerConfig {
         return this;
     }
 
-    //А нужен ли нам этот метод?
-
-    public ServerConfig addHandlerClass(String path, Class<? extends Handler> cls) {
+    public ServerConfig addHandlerClass(String path, Class<? extends Handler> MyClass) {
+        userHandlersClasses.put(path, MyClass);
 
         return this;
     }
+
+    public ServerConfig addHandlersClasses(Map<String, Class<? extends Handler>> handlers) {
+        userHandlersClasses.putAll(handlers);
+
+        return this;
+    }
+
 
     /**
      * Add handler mappings.
@@ -135,6 +144,10 @@ public class ServerConfig {
         return classes;
     }
 
+    public Map<String, Class<? extends Handler>> getUserHandlersClasses() {
+        return userHandlersClasses;
+    }
+
     @Override
     public String toString() {
         return "ServerConfig{" +
@@ -150,6 +163,7 @@ public class ServerConfig {
      * Set request dispatcher.
      *
      * @param dispatcher Dispatcher to set.
+     * @return Itself for chaining.
      * @return Itself for chaining.
      * @see Dispatcher
      */

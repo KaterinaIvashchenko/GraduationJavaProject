@@ -1,5 +1,4 @@
-
-        package ru.ifmo.server;
+package ru.ifmo.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +8,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.ServerSocket;
@@ -87,7 +85,7 @@ public class Server implements Closeable {
      * @return Server instance.
      * @see ServerConfig
      */
-    public static Server start(ServerConfig config) {
+    public static Server start(ServerConfig config) throws ServerException {
         if (config == null)
             config = new ServerConfig();
 
@@ -97,7 +95,10 @@ public class Server implements Closeable {
 
             Server server = new Server(config);
 
+            server.addHandlersClasses(config.getUserHandlersClasses());
             server.addScanClasses(config.getClasses());
+
+            config.addHandlers(server.config.getHandlers());
 
             server.openConnection();
             server.startAcceptor();
@@ -108,6 +109,78 @@ public class Server implements Closeable {
             throw new ServerException("Cannot start server on port: " + config.getPort());
         }
     }
+
+    private void addHandlersClasses(Map<String, Class<? extends Handler>> userHandlersClasses) throws ServerException {
+
+        Map<Class<? extends Handler>, Handler> singleHandler = new HashMap<>();
+
+        for (Map.Entry<String, Class<? extends Handler>> entry : userHandlersClasses.entrySet()) {
+            String key = entry.getKey();
+            Class<? extends Handler> value = entry.getValue();
+
+            Handler handler = null;
+            boolean isImplementsHandler = false;
+            boolean isHaveHandleMethod = false;
+
+            String name = value.getName();
+            Class<?> cl = null;
+            try {
+                cl = Class.forName(name);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            Class[] interfaces = cl.getInterfaces();
+            for (Class cInterface : interfaces) {
+
+                if (cInterface.toString().contains("Handler")) {
+                    isImplementsHandler = true;
+
+                    for (Method method : cl.getDeclaredMethods()) {
+
+                        Class<?>[] params = method.getParameterTypes();
+                        Class<?> methodType = method.getReturnType();
+
+                        if (params.length == 2 && methodType.equals(void.class) && Modifier.isPublic(method.getModifiers())
+                                && params[0].equals(Request.class) && params[1].equals(Response.class)) {
+
+                            isHaveHandleMethod = true;
+
+                            try {
+                                handler = value.newInstance();
+                            } catch (Exception e) {
+                                LOG.error("Error when creating instance of the class", e);
+                                throw new ServerException("Error when creating instance of the class", e);
+                            }
+
+                            if (handler != null) {
+
+                                if (singleHandler.containsKey(value) == false) {
+                                    singleHandler.put(value, handler);
+                                    config.addHandler(key, handler);
+                                } else {
+                                    config.addHandler(key, singleHandler.get(value));
+                                }
+                            }
+                        }
+
+                        if (isHaveHandleMethod = false) {
+                            throw new ServerException(cl.getSimpleName() + " is not valid "
+                                    + "Valid class: must have public void method and accept only two arguments: Request and Response." + '\n' +
+                                    "Example: public void helloWorld(Request request, Response Response");
+                        }
+                        if (isImplementsHandler == false) {
+                            throw new ServerException("This class " + cl.getSimpleName() + " cannot be extends from Handler");
+                        }
+
+                    }
+
+                }
+
+            }
+        }
+    }
+
 
     /**
      * Forces any content in the buffer to be written to the client
