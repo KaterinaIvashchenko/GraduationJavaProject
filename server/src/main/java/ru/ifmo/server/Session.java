@@ -53,12 +53,14 @@ public class Session {
 
     public <T> void setParam(String key, T value) throws SessionException {
         if (!expired) {
-            synchronized (this) {
-                if (sessionData == null) {
-                    sessionData = new ConcurrentHashMap<>();
+            if (sessionData == null) {
+                synchronized (this) {
+                    if (sessionData == null) {
+                        sessionData = new ConcurrentHashMap<>();
+                    }
                 }
-                sessionData.put(key, value);
             }
+            sessionData.put(key, value);
         } else throw new SessionException("Session is expired!");
     }
 

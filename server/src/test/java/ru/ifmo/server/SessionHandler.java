@@ -7,6 +7,7 @@ public class SessionHandler implements Handler {
 
     @Override
     public void handle(Request request, Response response) throws Exception {
+        response.setCookie(new Cookie("name", "value"));
         request.getSession();
     }
 }

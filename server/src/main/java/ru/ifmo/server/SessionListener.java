@@ -17,7 +17,7 @@ public class SessionListener implements Runnable {
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
-            try  {
+            try {
 
                 for (Map.Entry<String, Session> entry : Server.getSessions().entrySet()) {
                     LocalDateTime ltnow = LocalDateTime.now();
