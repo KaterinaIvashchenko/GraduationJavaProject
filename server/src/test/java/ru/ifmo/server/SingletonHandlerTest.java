@@ -18,15 +18,10 @@ public class SingletonHandlerTest {
     @Before
     public void initialize() {
         cfg = new ServerConfig()
-                .addHandler("/succcess", new SuccessHandler())
                 .addHandlerClass("/succcess1", SuccessHandler.class)
                 .addHandlerClass("/succcess2", SuccessHandler.class);
 
         server = Server.start(cfg);
-
-        handler1 = this.cfg.handler("/succcess1");
-        handler2 = this.cfg.handler("/succcess2");
-
     }
 
     @After
@@ -38,12 +33,11 @@ public class SingletonHandlerTest {
     }
 
     @Test
-    public void testCreateSinglentonHandler() {
-        assertTrue(handler1 == handler2);
-    }
 
-    @Test
-    public void testCreateSinglentonHandlerHashCode() {
+    public void testCreateSinglentonHandler() {
+        handler1 = cfg.handler("/succcess1");
+        handler2 = cfg.handler("/succcess2");
+        assertTrue(handler1 == handler2);
         assertTrue(handler1.hashCode() == handler2.hashCode());
     }
 
