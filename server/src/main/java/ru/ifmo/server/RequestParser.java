@@ -102,12 +102,12 @@ class RequestParser {
 
         req.addHeader(key, sb.substring(start, len).trim());
 
-        if (key == "Cookie: ") {
+        if (key.equals("Cookie")) {
             String[] pairs = sb.substring(start, len).trim().split("; ");
             for (int i = 0; i < pairs.length; i++) {
                 String pair = pairs[i];
                 String[] keyValue = pair.split("=");
-                req.cookies.add(new Cookie(keyValue[0], keyValue[1]));
+                req.insertCookie(keyValue[0], keyValue[1]);
             }
         }
     }

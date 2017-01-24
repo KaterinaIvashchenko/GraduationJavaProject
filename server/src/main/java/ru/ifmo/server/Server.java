@@ -87,10 +87,10 @@ public class Server implements Closeable {
         Server.sessions.remove(key);
     }
 
-    // TODO This thread seems does not stop on shutdown
     private void listenSessions() throws IOException {
         SessionListener sessionListener = new SessionListener();
         Thread lisThread = new Thread(sessionListener);
+        lisThread.setDaemon(true);
         lisThread.start();
 
         LOG.info("Session listener started, deleting by timeout.");
@@ -170,8 +170,6 @@ public class Server implements Closeable {
 
                 for (Cookie cookie : response.setCookies) {
 
-                    System.out.println(response.setCookies.toString());
-
                     StringBuilder cookieline = new StringBuilder();
 
                     cookieline.append(cookie.name + "=" + cookie.value);
@@ -183,9 +181,6 @@ public class Server implements Closeable {
                     out.write(("Set-Cookie:" + SPACE + cookieline.toString() + CRLF).getBytes());
 
                 }
-
-                // TODO Why clear?
-//                response.setCookies.clear();
             }
 
             out.write(CRLF.getBytes());
@@ -221,6 +216,7 @@ public class Server implements Closeable {
     public void stop() {
         acceptorPool.shutdownNow();
         connectionProcessingPool.shutdownNow();
+
         Utils.closeQuiet(socket);
 
         socket = null;

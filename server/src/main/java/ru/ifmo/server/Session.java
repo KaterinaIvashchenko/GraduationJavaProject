@@ -4,29 +4,28 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Created by Gil on 08-Jan-17.
- */
 public class Session {
 
-    /** Aviable symbols and lenght to generate jsessionid*/
+    /**
+     * Aviable symbols and lenght to generate jsessionid
+     */
     private static final String JSID_SYMBOLS = "abcdefghijklmnopqrstuvwxyz123456789";
     private static final int JSID_LENGTH = 32;
 
-    /** Session name & livetime in minutes*/
+    /**
+     * Session name & livetime in minutes
+     */
     public static int SESSION_LIVETIME = 1;
     public static String SESSION_COOKIENAME = "JSESSIONID";
 
-    String id;
+    private String id;
     private LocalDateTime expire;
-    volatile boolean expired; // TODO Must be volatile
+    volatile boolean expired;
 
     public Session() {
         this.id = generateSID();
         this.setExpire(SESSION_LIVETIME);
         this.expired = false;
-
-        Server.setSessions(id, this);
     }
 
     public LocalDateTime getExpire() {
@@ -34,16 +33,11 @@ public class Session {
     }
 
     public synchronized void setExpire(int minutes) {
-        LocalDateTime expLdt = LocalDateTime.now().plusMinutes(minutes);
-        this.expire = expLdt;
+        this.expire = LocalDateTime.now().plusMinutes(minutes);
     }
 
     public void setExpired(boolean expired) {
         this.expired = expired;
-    }
-
-    public boolean isExpired() {
-        return expired;
     }
 
     public String getId() {
@@ -58,13 +52,14 @@ public class Session {
     private Map<String, Object> sessionData;
 
     public <T> void setParam(String key, T value) throws SessionException {
-        if (expired == false) {
-            if (sessionData == null) // TODO Use double checked locking
-                sessionData = new ConcurrentHashMap<>();
-            sessionData.put(key, value);
+        if (!expired) {
+            synchronized (this) {
+                if (sessionData == null) {
+                    sessionData = new ConcurrentHashMap<>();
+                }
+                sessionData.put(key, value);
+            }
         } else throw new SessionException("Session is expired!");
-
-
     }
 
     @SuppressWarnings("unchecked")

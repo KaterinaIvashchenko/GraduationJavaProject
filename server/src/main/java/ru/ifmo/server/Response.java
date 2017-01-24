@@ -29,16 +29,6 @@ public class Response {
         if (setCookies == null) {
             setCookies = new ArrayList<>();
         }
-
-        // TODO This logic must be in place, where response is built
-//        StringBuilder cookieline = new StringBuilder();
-//
-//        cookieline.append(cookie.name + "=" + cookie.value);
-//        if (cookie.maxage != null) cookieline.append(";MAX-AGE=" + cookie.maxage);
-//        if (cookie.domain != null) cookieline.append(";DOMAIN=" + cookie.domain);
-//        if (cookie.path != null) cookieline.append(";PATH=" + cookie.path);
-//        cookieline.append(";");
-
         setCookies.add(cookie);
     }
 
@@ -48,12 +38,6 @@ public class Response {
             setCookies = new ArrayList<>();
         }
 
-        // TODO Should be simple null assignment, but response
-        // TODO building shouldn't be here
-//        StringBuilder cookieline = new StringBuilder();
-//
-//        cookieline.append(name + "=" + null);
-//        cookieline.append(";");
         cookie.value = " ";
 
         setCookies.add(cookie);

@@ -24,7 +24,8 @@ public class Request {
     private RequestBody body;
     private Map<String, String> headers;
     private Map<String, String> args;
-    List<Cookie> cookies;
+    private Map<String, String> cookies;
+
     private Session session;
 
     public Request(Socket socket) {
@@ -101,59 +102,28 @@ public class Request {
         return Collections.unmodifiableMap(args);
     }
 
-    private List<Cookie> getCookies() {
+    void insertCookie(String name, String value) {
+        if (cookies == null) {
+            cookies = new HashMap<>();
+        }
+        cookies.put(name, value);
+    }
+
+    public Map<String, String> getCookies() {
 
         if (getHeaders().get("Cookie") == null) {
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
 
-        // TODO move to place, where Request is parsed
-        if (cookies == null) {
-            cookies = new ArrayList<>();
-            String cookieline = getHeaders().get("Cookie");
-            String[] pairs = cookieline.split("; ");
-            for (int i = 0; i < pairs.length; i++) {
-                String pair = pairs[i];
-                String[] keyValue = pair.split("=");
-                cookies.add(new Cookie(keyValue[0], keyValue[1]));
-            }
-        }
-        return Collections.unmodifiableList(cookies);
+        return Collections.unmodifiableMap(cookies);
     }
-
 
     public String getCookieValue(String cookiename) {
-
-        if (cookies == null) { // TODO should not be here
-            cookies = getCookies();
-        }
-
-        // TODO save in Request and create when cookies are parsed
-        Map<String, String> cookieValues = new HashMap<>();
-
-        if (cookies != null) {
-            for (Cookie currentCookie : cookies) {
-                cookieValues.put(currentCookie.name, currentCookie.value);
-            }
-            return cookieValues.get(cookiename);
-        } else return null;
+        return getCookies().get(cookiename);
     }
 
-    // TODO should be simple call to HashMap
     private boolean containsJSIDCookie() {
-
-        boolean flag = false;
-
-        if (cookies == null) {
-            cookies = getCookies();
-        }
-        if (cookies != null) {
-            for (Cookie currentCookie : cookies) {
-                if (currentCookie.name.equals(SESSION_COOKIENAME)) {
-                    flag = true; }
-            }
-        }
-        return flag;
+        return getCookies().containsKey(SESSION_COOKIENAME);
     }
 
     public Session getSession() {
@@ -164,8 +134,9 @@ public class Request {
     }
 
     public Session getSession(boolean create) {
-        if (!containsJSIDCookie() || create == true) {
-            session = new Session(); // TODO will it be added to session map?
+        if (!containsJSIDCookie() || create) {
+            session = new Session();
+            Server.setSessions(session.getId(), session);
         } else {
             session = Server.getSessions().get(getCookieValue(SESSION_COOKIENAME));
             if (session == null) {
