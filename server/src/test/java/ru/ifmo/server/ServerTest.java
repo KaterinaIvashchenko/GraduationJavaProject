@@ -190,10 +190,15 @@ public class ServerTest {
 
     @Test
     public void testCookie() throws Exception {
-        HttpGet req = new HttpGet(SESSION_URL);
+        HttpHead req = new HttpHead(SESSION_URL);
+
+//        req.setHeader("Cookie", "VKJ=name");
 
         CloseableHttpResponse response = client.execute(host, req);
-        System.out.println(response);
+
+        System.out.println("Entity = " + EntityUtils.toString(response.getEntity()));
+        System.out.println("Responce = " + response);
+        System.out.println("Request = " + req);
 //        assertTrue(response.toString().contains("JSESSIONID=" + Server.getSessions().keySet().iterator().next()));
     }
 
