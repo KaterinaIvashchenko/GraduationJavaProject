@@ -27,6 +27,7 @@ public class CookieExample {
                 sb.append("<head><title>Java kanban project</title>");
                 sb.append("</title>");
                 sb.append("<p><b>Login page</b></p><br>");
+
                 if (name == null) {
                     sb.append("<p>Hello new user!</p>");
                 } else {
