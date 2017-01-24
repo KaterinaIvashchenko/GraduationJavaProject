@@ -176,7 +176,6 @@ public class Server implements Closeable {
                     if (cookie.maxage != null) cookieline.append(";MAX-AGE=" + cookie.maxage);
                     if (cookie.domain != null) cookieline.append(";DOMAIN=" + cookie.domain);
                     if (cookie.path != null) cookieline.append(";PATH=" + cookie.path);
-                    cookieline.append(";");
 
                     out.write(("Set-Cookie:" + SPACE + cookieline.toString() + CRLF).getBytes());
 
