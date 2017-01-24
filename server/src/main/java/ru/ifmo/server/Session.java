@@ -9,17 +9,17 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Session {
 
-    /*Aviable symbols and lenght to generate jsessionid*/
+    /** Aviable symbols and lenght to generate jsessionid*/
     private static final String JSID_SYMBOLS = "abcdefghijklmnopqrstuvwxyz123456789";
     private static final int JSID_LENGTH = 32;
 
-    /*Session name & livetime in minutes*/
+    /** Session name & livetime in minutes*/
     public static int SESSION_LIVETIME = 1;
     public static String SESSION_COOKIENAME = "JSESSIONID";
 
     String id;
     private LocalDateTime expire;
-    boolean expired;
+    volatile boolean expired; // TODO Must be volatile
 
     public Session() {
         this.id = generateSID();
@@ -57,13 +57,9 @@ public class Session {
 
     private Map<String, Object> sessionData;
 
-    public Map<String, Object> getSessionData() {
-        return sessionData;
-    }
-
     public <T> void setParam(String key, T value) throws SessionException {
         if (expired == false) {
-            if (sessionData == null)
+            if (sessionData == null) // TODO Use double checked locking
                 sessionData = new ConcurrentHashMap<>();
             sessionData.put(key, value);
         } else throw new SessionException("Session is expired!");

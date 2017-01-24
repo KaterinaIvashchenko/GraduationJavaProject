@@ -18,7 +18,7 @@ public class Response {
     ByteArrayOutputStream bufferOutputStream;
     PrintWriter printWriter;
     Map<String,String> headers = new LinkedHashMap<>();
-    List<String> setCookies;
+    List<Cookie> setCookies;
 
     Response(Socket socket) {
         this.socket = socket;
@@ -30,29 +30,33 @@ public class Response {
             setCookies = new ArrayList<>();
         }
 
-        StringBuilder cookieline = new StringBuilder();
+        // TODO This logic must be in place, where response is built
+//        StringBuilder cookieline = new StringBuilder();
+//
+//        cookieline.append(cookie.name + "=" + cookie.value);
+//        if (cookie.maxage != null) cookieline.append(";MAX-AGE=" + cookie.maxage);
+//        if (cookie.domain != null) cookieline.append(";DOMAIN=" + cookie.domain);
+//        if (cookie.path != null) cookieline.append(";PATH=" + cookie.path);
+//        cookieline.append(";");
 
-        cookieline.append(cookie.name + "=" + cookie.value);
-        if (cookie.maxage != null) cookieline.append(";MAX-AGE=" + cookie.maxage);
-        if (cookie.domain != null) cookieline.append(";DOMAIN=" + cookie.domain);
-        if (cookie.path != null) cookieline.append(";PATH=" + cookie.path);
-        cookieline.append(";");
-
-        setCookies.add(cookieline.toString());
+        setCookies.add(cookie);
     }
 
-    public void resetCookie(String name) {
+    public void resetCookie(Cookie cookie) {
 
         if (setCookies == null) {
             setCookies = new ArrayList<>();
         }
 
-        StringBuilder cookieline = new StringBuilder();
+        // TODO Should be simple null assignment, but response
+        // TODO building shouldn't be here
+//        StringBuilder cookieline = new StringBuilder();
+//
+//        cookieline.append(name + "=" + null);
+//        cookieline.append(";");
+        cookie.value = " ";
 
-        cookieline.append(name + "=" + null);
-        cookieline.append(";");
-
-        setCookies.add(cookieline.toString());
+        setCookies.add(cookie);
     }
 
     /**

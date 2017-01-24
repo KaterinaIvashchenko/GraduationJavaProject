@@ -24,7 +24,7 @@ public class Request {
     private RequestBody body;
     private Map<String, String> headers;
     private Map<String, String> args;
-    private List<Cookie> cookies;
+    List<Cookie> cookies;
     private Session session;
 
     public Request(Socket socket) {
@@ -104,9 +104,10 @@ public class Request {
     private List<Cookie> getCookies() {
 
         if (getHeaders().get("Cookie") == null) {
-            return null;
+            return Collections.emptyList();
         }
 
+        // TODO move to place, where Request is parsed
         if (cookies == null) {
             cookies = new ArrayList<>();
             String cookieline = getHeaders().get("Cookie");
@@ -123,10 +124,11 @@ public class Request {
 
     public String getCookieValue(String cookiename) {
 
-        if (cookies == null) {
+        if (cookies == null) { // TODO should not be here
             cookies = getCookies();
         }
 
+        // TODO save in Request and create when cookies are parsed
         Map<String, String> cookieValues = new HashMap<>();
 
         if (cookies != null) {
@@ -137,9 +139,10 @@ public class Request {
         } else return null;
     }
 
+    // TODO should be simple call to HashMap
     private boolean containsJSIDCookie() {
 
-        Boolean flag = false;
+        boolean flag = false;
 
         if (cookies == null) {
             cookies = getCookies();
@@ -162,7 +165,7 @@ public class Request {
 
     public Session getSession(boolean create) {
         if (!containsJSIDCookie() || create == true) {
-            session = new Session();
+            session = new Session(); // TODO will it be added to session map?
         } else {
             session = Server.getSessions().get(getCookieValue(SESSION_COOKIENAME));
             if (session == null) {
