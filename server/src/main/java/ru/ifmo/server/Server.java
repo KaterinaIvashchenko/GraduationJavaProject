@@ -2,7 +2,7 @@
         package ru.ifmo.server;
 
 import com.sun.activation.registries.MimeTypeFile;
-import org.apache.http.HttpHeaders;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.ifmo.server.annotation.URL;
@@ -21,6 +21,7 @@ import java.lang.reflect.Modifier;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -325,26 +326,6 @@ public class Server implements Closeable {
 
         Handler handler = config.handler(path);
 
-
-        resp.setContentType("image/jpg");
-
-        File a =  new File("src/main/java/ru.ifmo.example.server/resources/1.jpg");
-        resp.setHeader(".jpg",MIME_IMAGE_JPEG);
-        resp.getOutputStreamBuffer();
-        resp.setContentType(MIME_IMAGE_JPEG);
-
-        ServerConfig serverConfig = new ServerConfig();
-        serverConfig.setWorkDir(a);
-        System.out.println(a.getAbsolutePath());
-
-
-        //if(serverConfig.handler(a.toString()).equals(a.getAbsoluteFile()))
-
-
-
-
-
-
         if (handler != null) {
 
             try {
@@ -360,10 +341,33 @@ public class Server implements Closeable {
             ReflectHandler reflectHandler = classHandlers.get(req.getPath());
             if (reflectHandler != null && reflectHandler.isApplicable(req.method))
                 processReflectHandler(reflectHandler, req, resp, sock);
-            else
-                respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
-                        sock.getOutputStream());
+            else {
+                String dirPath = config.getWorkDir().getAbsolutePath();
+
+                String filePath = dirPath + path;
+
+                File file = new File(filePath);
+
+                if (file.exists()) {
+                    resp.getOutputStreamBuffer().write(Files.readAllBytes(file.toPath()));
+
+                    resp.setContentType(findMime(file));
+                    flushResponse(resp);
+                }
+                else
+                    respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
+                            sock.getOutputStream());
+            }
+
         }
+    }
+
+    private String findMime(File file) {
+        if (file.getName().endsWith(".jpg")) {
+            return Http.MIME_IMAGE_JPEG;
+        }
+
+        return Http.MIME_TEXT_PLAIN;
     }
 
     static void respond(int code, String statusMsg, String content, OutputStream out) throws IOException {

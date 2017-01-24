@@ -19,15 +19,7 @@ public class ServerConfig {
     private Collection<Class<?>> classes;
     private int socketTimeout;
     private Dispatcher dispatcher;
-    private File file;
-
-    public File getFile() {
-        return file;
-    }
-
-    public void setFile(File file) {
-        this.file = file;
-    }
+    private File workDir;
 
     public ServerConfig() {
         handlers = new HashMap<>();
@@ -42,10 +34,12 @@ public class ServerConfig {
         classes = new ArrayList<>(config.classes);
         socketTimeout = config.socketTimeout;
         dispatcher = config.dispatcher;
+        workDir = config.workDir;
     }
 
-    public File setWorkDir(File file) {
-        return this.file;
+    public ServerConfig setWorkDir(File file) {
+        this.workDir = file;
+        return this;
     }
 
     /**
@@ -179,5 +173,9 @@ public class ServerConfig {
      */
     public Dispatcher getDispatcher() {
         return dispatcher;
+    }
+
+    public File getWorkDir() {
+        return workDir;
     }
 }
