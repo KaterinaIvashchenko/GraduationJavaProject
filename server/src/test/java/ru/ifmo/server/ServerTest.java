@@ -189,11 +189,9 @@ public class ServerTest {
         CloseableHttpResponse response = client.execute(host, req);
 
         String[] keyValue = new String[1];
-
         Header[] headers = response.getHeaders("Set-Cookie");
         for (int i = 0; i < headers.length; i++) {
-            String pair = headers[i].getValue();
-            keyValue = pair.split("=");
+            keyValue = headers[i].getValue().split("=");
         }
         assertTrue(Server.getSessions().keySet().contains(keyValue[1]));
     }
