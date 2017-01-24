@@ -191,16 +191,6 @@ public class ServerTest {
         assertEquals("somename=somevalue", EntityUtils.toString(response.getEntity()));
     }
 
-//    @Test
-//    public void testSession() throws Exception {
-//        HttpGet req = new HttpGet(SESSION_URL);
-//
-//        CloseableHttpResponse response = client.execute(host, req);
-//        System.out.println("Responce = " + response);
-//
-//        assertTrue(response.toString().contains("JSESSIONID=" + Server.getSessions().keySet().iterator().next()));
-//    }
-
     @Test
     public void testServerError() throws Exception {
         HttpGet get = new HttpGet(SERVER_ERROR_URL);
