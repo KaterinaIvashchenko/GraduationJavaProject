@@ -183,6 +183,22 @@ public class ServerTest {
     }
 
     @Test
+    public void testSession() throws Exception {
+        HttpGet req = new HttpGet(SESSION_URL);
+
+        CloseableHttpResponse response = client.execute(host, req);
+
+        String[] keyValue = new String[1];
+
+        Header[] headers = response.getHeaders("Set-Cookie");
+        for (int i = 0; i < headers.length; i++) {
+            String pair = headers[i].getValue();
+            keyValue = pair.split("=");
+        }
+        assertTrue(Server.getSessions().keySet().contains(keyValue[1]));
+    }
+
+    @Test
     public void testCookie() throws Exception {
         HttpGet req = new HttpGet(COOKIE_URL);
 
