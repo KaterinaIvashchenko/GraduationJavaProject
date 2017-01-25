@@ -29,6 +29,7 @@ public class Http {
 
     // Mime types
     public static final String MIME_TEXT_PLAIN = "text/plain";
+    public static final String MIME_TEXT_CSS = "text/css";
     public static final String MIME_IMAGE_GIF= "image/gif";
     public static final String MIME_IMAGE_JPEG = "image/jpeg";
     public static final String MIME_IMAGE_JPG = "image/jpg";

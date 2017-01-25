@@ -323,6 +323,8 @@ public class Server implements Closeable {
             return Http.MIME_TEXT_HTML;
         } else if (file.getName().endsWith(".pdf")) {
             return Http.MIME_APPLICATION_PDF;
+        } else if (file.getName().endsWith(".css")) {
+            return Http.MIME_TEXT_CSS;
         }
         return Http.MIME_TEXT_PLAIN;
     }

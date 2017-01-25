@@ -14,7 +14,7 @@ public class HelloWorldExample {
 
         ServerConfig config = new ServerConfig();
 
-        config.setWorkDir(new File("D:\\JavaDiplomItmo2\\GraduationJavaProject\\example\\src\\main\\resources"));
+        config.setWorkDir(new File("D:\\JavaCourse2\\GraduationJavaProject\\example\\src\\main\\resources"));
 
         Server.start(config);
     }
