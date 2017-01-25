@@ -1,5 +1,5 @@
 
-        package ru.ifmo.server;
+package ru.ifmo.server;
 
 import com.sun.activation.registries.MimeTypeFile;
 
@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.ifmo.server.annotation.URL;
 import ru.ifmo.server.util.Utils;
-
 
 
 import javax.activation.MimetypesFileTypeMap;
@@ -33,11 +32,11 @@ import static ru.ifmo.server.util.Utils.htmlMessage;
 /**
  * Ifmo Web Server.
  * <p>
- *     To start server use {@link #start(ServerConfig)} and register at least
- *     one handler to process HTTP requests.
- *     Usage example:
- *     <pre>
- *{@code
+ * To start server use {@link #start(ServerConfig)} and register at least
+ * one handler to process HTTP requests.
+ * Usage example:
+ * <pre>
+ * {@code
  * ServerConfig config = new ServerConfig()
  *      .addHandler("/index", new Handler() {
  *          public void handle(Request request, Response response) throws Exception {
@@ -52,7 +51,7 @@ import static ru.ifmo.server.util.Utils.htmlMessage;
  *     </pre>
  * </p>
  * <p>
- *     To stop the server use {@link #stop()} or {@link #close()} methods.
+ * To stop the server use {@link #stop()} or {@link #close()} methods.
  * </p>
  *
  * @see ServerConfig
@@ -120,7 +119,7 @@ public class Server implements Closeable {
     /**
      * Forces any content in the buffer to be written to the client
      */
-    public static void flushResponse (Response response) {
+    public static void flushResponse(Response response) {
         int statusCode = response.getStatusCode();
 
         if (statusCode == 0)
@@ -142,11 +141,11 @@ public class Server implements Closeable {
             OutputStream out = response.socket.getOutputStream();
             out.write(("HTTP/1.0" + SPACE + statusCode + SPACE + statusNames[statusCode] + CRLF).getBytes());
 
-            for (String key:response.headers.keySet()) {
-                out.write((key+":"+SPACE+response.headers.get(key) + CRLF).getBytes());
+            for (String key : response.headers.keySet()) {
+                out.write((key + ":" + SPACE + response.headers.get(key) + CRLF).getBytes());
             }
             out.write(CRLF.getBytes());
-            if (response.bufferOutputStream!=null)
+            if (response.bufferOutputStream != null)
                 out.write(response.bufferOutputStream.toByteArray());
 
             out.flush();
@@ -175,41 +174,6 @@ public class Server implements Closeable {
         Utils.closeQuiet(socket);
 
         socket = null;
-    }
-    private void setContentTypeHeader(Response response, File file) {
-        String mimeType = null;
-        String filePath = file.getPath();
-
-        int idx = filePath.lastIndexOf('.');
-        if (idx == -1) {
-            mimeType = "application/octet-stream";
-        } else {
-            String fileExtension = filePath.substring(idx).toLowerCase();
-
-            // Try common types first
-            if (fileExtension.equals(".html")) {
-                mimeType = "text/html";
-            } else if (fileExtension.equals(".css")) {
-                mimeType = "text/css";
-            } else if (fileExtension.equals(".js")) {
-                mimeType = "application/javascript";
-            } else if (fileExtension.equals(".gif")) {
-                mimeType = "image/gif";
-            } else if (fileExtension.equals(".png")) {
-                mimeType = "image/png";
-            } else if (fileExtension.equals(".txt")) {
-                mimeType = "text/plain";
-            } else if (fileExtension.equals(".xml")) {
-                mimeType = "application/xml";
-            } else if (fileExtension.equals(".json")) {
-                mimeType = "application/json";
-            } else {
-                MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
-                mimeType = mimeTypesMap.getContentType(file.getPath());
-            }
-        }
-
-        response.setHeader(MIME_IMAGE_JPEG, mimeType);
     }
 
     private class ReflectHandler {
@@ -255,15 +219,15 @@ public class Server implements Closeable {
                             ReflectHandler reflectHandler = new ReflectHandler(cls.newInstance(), method, set);
                             classHandlers.put(path, reflectHandler);
                         } else {
-                                throw new ServerException("Invalid @URL annotated method: " + c.getSimpleName() + "." + method.getName() + "(). "
-                                        + "Valid method: must be public void and accept only two arguments: Request and Response." + '\n' +
+                            throw new ServerException("Invalid @URL annotated method: " + c.getSimpleName() + "." + method.getName() + "(). "
+                                    + "Valid method: must be public void and accept only two arguments: Request and Response." + '\n' +
                                     "Example: public void helloWorld(Request request, Response Response");
                         }
 
                     }
                 }
             } catch (ReflectiveOperationException e) {
-                    throw new ServerException("Unable initialize @URL annotated handlers. ", e);
+                throw new ServerException("Unable initialize @URL annotated handlers. ", e);
             }
         }
     }
@@ -331,43 +295,59 @@ public class Server implements Closeable {
             try {
                 handler.handle(req, resp);
                 flushResponse(resp);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 if (LOG.isDebugEnabled())
                     LOG.error("Server error:", e);
-                respond(SC_SERVER_ERROR,htmlMessage(SC_SERVER_ERROR + " Server error"),resp);
+                respond(SC_SERVER_ERROR, htmlMessage(SC_SERVER_ERROR + " Server error"), resp);
             }
         } else {
-            ReflectHandler reflectHandler = classHandlers.get(req.getPath());
-            if (reflectHandler != null && reflectHandler.isApplicable(req.method))
-                processReflectHandler(reflectHandler, req, resp, sock);
-            else {
-                String dirPath = config.getWorkDir().getAbsolutePath();
+            findPath(req, resp, sock, path);
 
-                String filePath = dirPath + path;
 
-                File file = new File(filePath);
+            respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
+                    sock.getOutputStream());
+        }
 
-                if (file.exists()) {
-                    resp.getOutputStreamBuffer().write(Files.readAllBytes(file.toPath()));
 
-                    resp.setContentType(findMime(file));
-                    flushResponse(resp);
-                }
-                else
-                    respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
-                            sock.getOutputStream());
+    }
+
+
+    private String findMime(File file) {
+        if (file.getName().endsWith(".jpeg")) {
+            return Http.MIME_IMAGE_JPEG;
+        } else if (file.getName().endsWith(".jpg")) {
+            return Http.MIME_IMAGE_JPG;
+        } else if (file.getName().endsWith(".gif")) {
+            return Http.MIME_IMAGE_GIF;
+        } else if (file.getName().endsWith(".html")) {
+            return Http.MIME_TEXT_HTML;
+        } else if (file.getName().endsWith(".pdf")) {
+            return Http.MIME_APPLICATION_PDF;
+        }
+        return Http.MIME_TEXT_PLAIN;
+    }
+
+
+
+    private void findPath(Request req, Response resp, Socket sock, String path) throws IOException {
+        ReflectHandler reflectHandler = classHandlers.get(req.getPath());
+        if (reflectHandler != null && reflectHandler.isApplicable(req.method))
+            processReflectHandler(reflectHandler, req, resp, sock);
+        else {
+            String dirPath = config.getWorkDir().getAbsolutePath();
+
+            String filePath = dirPath + path;
+
+            File file = new File(filePath);
+
+            if (file.exists()) {
+                resp.getOutputStreamBuffer().write(Files.readAllBytes(file.toPath()));
+
+                resp.setContentType(findMime(file));
+                flushResponse(resp);
             }
 
         }
-    }
-
-    private String findMime(File file) {
-        if (file.getName().endsWith(".jpg")) {
-            return Http.MIME_IMAGE_JPEG;
-        }
-
-        return Http.MIME_TEXT_PLAIN;
     }
 
     static void respond(int code, String statusMsg, String content, OutputStream out) throws IOException {
@@ -437,17 +417,17 @@ public class Server implements Closeable {
 
                 try {
                     processConnection(sock);
-                }
-               catch (IOException e) {
+                } catch (IOException e) {
                     LOG.error("Error input / output during data transfer", e);
 
-               } finally {
+                } finally {
                     try {
                         sock.close();
                         Thread.currentThread().interrupt();
                     } catch (IOException e) {
-                    if (!Thread.currentThread().isInterrupted())
-                        LOG.error("Error accepting connection", e);LOG.error("Error closing the socket", e);
+                        if (!Thread.currentThread().isInterrupted())
+                            LOG.error("Error accepting connection", e);
+                        LOG.error("Error closing the socket", e);
                     }
                 }
             }
