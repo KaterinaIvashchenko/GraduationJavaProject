@@ -19,6 +19,7 @@ import static org.junit.Assert.assertNotNull;
 public class ConfigLoaderTest {
 
     private static String PATH = "/success";
+    private static String className = "ru.ifmo.server.ScanClassFile";
 
     @Test
     public void testProperties() throws IOException {
@@ -36,6 +37,7 @@ public class ConfigLoaderTest {
         ServerConfig config = new ConfigLoader().load(tmpFile);
 
         checkConfig(config);
+        checkScanClass(config);
     }
 
     @Test
@@ -54,6 +56,7 @@ public class ConfigLoaderTest {
         ServerConfig config = new ConfigLoader().load(tmpFile);
 
         checkConfig(config);
+        checkScanClass(config);
     }
 
     @Test
@@ -73,5 +76,12 @@ public class ConfigLoaderTest {
         assertEquals(paths, config.getHandlers().keySet());
         assertNotNull(config.getHandlers().get(PATH));
         assertEquals(SuccessHandler.class, config.getHandlers().get(PATH).getClass());
+    }
+
+    private void checkScanClass(ServerConfig config) {
+        for (Class<?> cls : config.getClasses()) {
+            assertEquals(className, cls.getName());
+            assertEquals(ScanClassFile.class, cls);
+        }
     }
 }
