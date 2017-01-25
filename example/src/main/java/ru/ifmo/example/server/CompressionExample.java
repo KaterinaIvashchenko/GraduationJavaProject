@@ -30,6 +30,10 @@ public class CompressionExample {
                 sb.append("<head><title>Java kanban project</title>");
                 sb.append("</head>");
                 sb.append("<p>");
+                sb.append("<form>");
+                sb.append("First name: <input type=\"text\" name=\"name\"></input><br>");
+                sb.append("<input type=\"submit\" value=\"Submit\">");
+                sb.append("<form><br>");
                 for (int k = 0; k < 3 ; k++) {
                     for (int i = 1; i < 6 ; i++) {
                         sb.append("<font size=\"" + i + "\" >Съешь еще этих мягких французских булок, да выпей же чаю.</font><br>");
@@ -38,6 +42,7 @@ public class CompressionExample {
                         sb.append("<font size=\"" + j + "\" >Съешь ещё этих мягких французских булок, да выпей же чаю.</font><br>");
                     }
                 }
+                sb.append("<h3>" + request.getArguments().get("name") + "</h3>");
                 sb.append("</p>");
                 sb.append("</body></html>");
             }

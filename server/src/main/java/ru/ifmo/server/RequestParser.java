@@ -5,10 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PushbackInputStream;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.zip.GZIPInputStream;
 
 import static ru.ifmo.server.Http.*;
 import static ru.ifmo.server.HttpMethod.*;
@@ -57,7 +60,7 @@ class RequestParser {
             }
         }
 
-        readBody(reader, sb, req);
+        readBody(socket.getInputStream(), sb, req);
 
         return req;
     }
@@ -178,16 +181,29 @@ class RequestParser {
         }
     }
 
+    public static InputStream decompressStream(InputStream input) throws IOException {
+        PushbackInputStream pb = new PushbackInputStream(input, 2);
+        byte [] signature = new byte[2];
+        int len = pb.read(signature);
+        pb.unread(signature, 0, len);
+        if(signature[0] == (byte) 0x1f && signature[1] == (byte) 0x8b)
+            return new GZIPInputStream(pb);
+        else
+            return pb;
+    }
+
     // TODO support binary content
-    private static void readBody(InputStreamReader in, StringBuilder sb, Request req) throws IOException {
+    private static void readBody(InputStream in, StringBuilder sb, Request req) throws IOException {
         final RequestBody body = req.getBody();
 
         if (body.contentLength == 0)
             return;
 
+        InputStreamReader inr = new InputStreamReader(decompressStream(in));
+
         int c;
         int count = 0;
-        while ((c = in.read()) >= 0) {
+        while ((c = inr.read()) >= 0) {
             sb.append((char) c);
             count++;
             if (count == body.getContentLength()) {
