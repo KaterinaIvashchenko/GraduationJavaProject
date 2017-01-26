@@ -1,22 +1,10 @@
 package ru.ifmo.server;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
-/**
- * Created by GilEO on 26.01.2017.
- */
 public class SessionTest {
 
     @Test
