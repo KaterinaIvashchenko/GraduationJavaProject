@@ -8,7 +8,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.ServerSocket;
@@ -129,27 +128,19 @@ public class Server implements Closeable {
 
             if (Handler.class.isAssignableFrom(cl)) {
 
-                Constructor<?>[] AllConstructors = cl.getConstructors();
-                for (Constructor constructor : AllConstructors) {
-                    if (constructor.getParameterCount() == 0) {
+                try {
+                    handler = value.getConstructor().newInstance();
+                } catch (NoSuchMethodException e) {
+                    throw new ServerException("This class " + cl.getSimpleName() + "does not contains an empty constructor");
+                } catch (Exception e) {
+                    throw new ServerException("Error when creating instance of the class", e);
+                }
 
-                        try {
-                            handler = value.newInstance();
-                        } catch (Exception e) {
-                            throw new ServerException("Error when creating instance of the class", e);
-                        }
-
-                        if (singleHandler.containsKey(value)) {
-                            config.addHandler(url, handler);
-                        } else {
-                            singleHandler.put(value, handler);
-                            config.addHandler(url, singleHandler.get(value));
-                        }
-
-                    } else {
-                        throw new ServerException("This class " + cl.getSimpleName() + "does not contains an empty constructor");
-                    }
-
+                if (singleHandler.containsKey(value)) {
+                    config.addHandler(url, handler);
+                } else {
+                    singleHandler.put(value, handler);
+                    config.addHandler(url, singleHandler.get(value));
                 }
 
             } else {
