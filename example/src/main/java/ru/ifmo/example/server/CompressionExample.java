@@ -30,7 +30,7 @@ public class CompressionExample {
                 sb.append("<head><title>Java kanban project</title>");
                 sb.append("</head>");
                 sb.append("<p>");
-                sb.append("<form>");
+                sb.append("<form method=\"POST\" action=\"" + request.getPath() + "\">");
                 sb.append("First name: <input type=\"text\" name=\"name\"></input><br>");
                 sb.append("<input type=\"submit\" value=\"Submit\">");
                 sb.append("<form><br>");

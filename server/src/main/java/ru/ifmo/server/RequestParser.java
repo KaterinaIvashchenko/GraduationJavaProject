@@ -31,10 +31,12 @@ class RequestParser {
     private static final Logger LOG = LoggerFactory.getLogger(RequestParser.class);
 
     static Request parseRequest(Socket socket) throws IOException, URISyntaxException {
+
         InputStreamReader reader = new InputStreamReader(socket.getInputStream());
 
         Request req = new Request(socket);
-        StringBuilder sb = new StringBuilder(READER_BUF_SIZE); // TODO
+
+        StringBuilder sb = new StringBuilder(READER_BUF_SIZE);
 
         while (readLine(reader, sb) > 0) {
             if (req.method == null)
@@ -60,7 +62,7 @@ class RequestParser {
             }
         }
 
-        readBody(socket.getInputStream(), sb, req);
+        readBody(reader, sb, req);
 
         return req;
     }
@@ -181,28 +183,16 @@ class RequestParser {
         }
     }
 
-    public static InputStream decompressStream(InputStream input) throws IOException {
-        PushbackInputStream pb = new PushbackInputStream(input, 2);
-        byte [] signature = new byte[2];
-        int len = pb.read(signature);
-        pb.unread(signature, 0, len);
-        if(signature[0] == (byte) 0x1f && signature[1] == (byte) 0x8b)
-            return new GZIPInputStream(pb);
-        else
-            return pb;
-    }
 
-    private static void readBody(InputStream in, StringBuilder sb, Request req) throws IOException {
+    private static void readBody(InputStreamReader in, StringBuilder sb, Request req) throws IOException {
         final RequestBody body = req.getBody();
 
         if (body.contentLength == 0)
             return;
 
-        InputStreamReader inr = new InputStreamReader(decompressStream(in));
-
         int c;
         int count = 0;
-        while ((c = inr.read()) >= 0) {
+        while ((c = in.read()) >= 0) {
             sb.append((char) c);
             count++;
             if (count == body.getContentLength()) {

@@ -276,7 +276,7 @@ public class ServerTest {
         HttpRequest request = new HttpGet(COMPRESS_URL);
 
         CloseableHttpResponse response = client.execute(host, request);
-        assertEquals(CompressHandler.TEST_RESPONSE, EntityUtils.toString(response.getEntity()));
+        assertEquals(CompressHandler.TEST_HTML, EntityUtils.toString(response.getEntity()));
     }
 
     @Test

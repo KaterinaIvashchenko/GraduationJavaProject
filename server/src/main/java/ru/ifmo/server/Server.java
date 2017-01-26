@@ -189,7 +189,7 @@ public class Server implements Closeable {
         }
     }
 
-    public static void flushBody(Response response, OutputStream out) throws IOException {
+    private static void flushBody(Response response, OutputStream out) throws IOException {
         if (response.bufferOutputStream!=null) {
             if (ServerConfig.getCompressionType() == CompressionType.GZIP && compressions.contains("gzip")) {
                 out.write(("Content-Encoding: gzip" + CRLF).getBytes());
