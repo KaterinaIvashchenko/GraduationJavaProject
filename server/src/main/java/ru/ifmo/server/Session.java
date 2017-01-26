@@ -18,6 +18,8 @@ public class Session {
     public static int SESSION_LIVETIME = 1;
     public static String SESSION_COOKIENAME = "JSESSIONID";
 
+    private Map<String, Object> sessionData;
+
     private String id;
     private LocalDateTime expire;
     volatile boolean expired;
@@ -48,8 +50,6 @@ public class Session {
         expired = true;
         Server.removeSession(id);
     }
-
-    private Map<String, Object> sessionData;
 
     public <T> void setParam(String key, T value) throws SessionException {
         if (!expired) {
