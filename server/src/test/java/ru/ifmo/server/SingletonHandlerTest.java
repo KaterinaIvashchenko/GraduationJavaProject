@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 public class SingletonHandlerTest {
 
@@ -49,7 +49,7 @@ public class SingletonHandlerTest {
         HttpGet get1 = new HttpGet("/succcess1");
         HttpGet get2 = new HttpGet("/succcess2");
 
-        assertTrue(client1.execute(host, get1).toString().equals(client2.execute(host, get2).toString()));
+        assertEquals(client1.execute(host, get1).toString(), client2.execute(host, get2).toString());
     }
 
 }

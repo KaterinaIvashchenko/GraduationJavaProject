@@ -8,6 +8,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.ServerSocket;
@@ -113,72 +114,49 @@ public class Server implements Closeable {
         Map<Class<? extends Handler>, Handler> singleHandler = new HashMap<>();
 
         for (Map.Entry<String, Class<? extends Handler>> entry : userHandlersClasses.entrySet()) {
-            String key = entry.getKey();
+            String url = entry.getKey();
             Class<? extends Handler> value = entry.getValue();
 
-            Handler handler = null;
-            boolean isImplementsHandler = false;
-            boolean isHaveHandleMethod = false;
-
+            Handler handler;
             String name = value.getName();
-            Class<?> cl = null;
+            Class<?> cl;
+
             try {
                 cl = Class.forName(name);
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                throw new ServerException("No definition for the class with the specified name could not be found", e);
             }
 
-            Class[] interfaces = cl.getInterfaces();
-            for (Class cInterface : interfaces) {
+            if (Handler.class.isAssignableFrom(cl)) {
 
-                if (cInterface.toString().contains("Handler")) {
-                    isImplementsHandler = true;
+                Constructor<?>[] AllConstructors = cl.getConstructors();
+                for (Constructor constructor : AllConstructors) {
+                    if (constructor.getParameterCount() == 0) {
 
-                    for (Method method : cl.getDeclaredMethods()) {
-
-                        Class<?>[] params = method.getParameterTypes();
-                        Class<?> methodType = method.getReturnType();
-
-                        if (params.length == 2 && methodType.equals(void.class) && Modifier.isPublic(method.getModifiers())
-                                && params[0].equals(Request.class) && params[1].equals(Response.class)) {
-
-                            isHaveHandleMethod = true;
-
-                            try {
-                                handler = value.newInstance();
-                            } catch (Exception e) {
-                                LOG.error("Error when creating instance of the class", e);
-                                throw new ServerException("Error when creating instance of the class", e);
-                            }
-
-                            if (handler != null) {
-
-                                if (singleHandler.containsKey(value) == false) {
-                                    singleHandler.put(value, handler);
-                                    config.addHandler(key, handler);
-                                } else {
-                                    config.addHandler(key, singleHandler.get(value));
-                                }
-                            }
+                        try {
+                            handler = value.newInstance();
+                        } catch (Exception e) {
+                            throw new ServerException("Error when creating instance of the class", e);
                         }
 
-                        if (isHaveHandleMethod = false) {
-                            throw new ServerException(cl.getSimpleName() + " is not valid "
-                                    + "Valid class: must have public void method and accept only two arguments: Request and Response." + '\n' +
-                                    "Example: public void helloWorld(Request request, Response Response");
-                        }
-                        if (isImplementsHandler == false) {
-                            throw new ServerException("This class " + cl.getSimpleName() + " cannot be extends from Handler");
+                        if (singleHandler.containsKey(value)) {
+                            config.addHandler(url, handler);
+                        } else {
+                            singleHandler.put(value, handler);
+                            config.addHandler(url, singleHandler.get(value));
                         }
 
+                    } else {
+                        throw new ServerException("This class " + cl.getSimpleName() + "does not contains an empty constructor");
                     }
 
                 }
 
+            } else {
+                throw new ServerException("This class " + cl.getSimpleName() + " cannot be implements from Handler");
             }
         }
     }
-
 
     /**
      * Forces any content in the buffer to be written to the client
