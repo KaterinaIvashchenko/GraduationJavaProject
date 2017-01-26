@@ -1,25 +1,39 @@
 package ru.ifmo.server;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+
+import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
 public class SingletonHandlerTest {
 
+    private static final HttpHost host = new HttpHost("localhost", ServerConfig.DFLT_PORT);
+
     private static Server server;
     private static ServerConfig cfg;
-    private static Handler handler1;
-    private static Handler handler2;
 
+    private CloseableHttpClient client1;
+    private CloseableHttpClient client2;
 
     @Before
     public void initialize() {
         cfg = new ServerConfig()
-                .addHandlerClass("/succcess1", SuccessHandler.class)
-                .addHandlerClass("/succcess2", SuccessHandler.class);
+                .addHandlerClass("/succcess1", SingletonSuccessHandler.class)
+                .addHandlerClass("/succcess2", SingletonSuccessHandler.class);
 
         server = Server.start(cfg);
     }
@@ -28,17 +42,20 @@ public class SingletonHandlerTest {
     public void close() {
         IOUtils.closeQuietly(server);
         server = null;
-        handler1 = null;
-        handler2 = null;
+        client1 = null;
+        client2 = null;
     }
 
     @Test
+    public void testCreateSinglentonHandler() throws IOException {
 
-    public void testCreateSinglentonHandler() {
-        handler1 = cfg.handler("/succcess1");
-        handler2 = cfg.handler("/succcess2");
-        assertTrue(handler1 == handler2);
-        assertTrue(handler1.hashCode() == handler2.hashCode());
+        client1 = HttpClients.createDefault();
+        client2 = HttpClients.createDefault();
+
+        HttpGet get1 = new HttpGet("/succcess1");
+        HttpGet get2 = new HttpGet("/succcess2");
+
+        assertTrue(client1.execute(host, get1).toString().equals(client2.execute(host, get2).toString()));
     }
 
 }

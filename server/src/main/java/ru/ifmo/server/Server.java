@@ -98,8 +98,6 @@ public class Server implements Closeable {
             server.addHandlersClasses(config.getUserHandlersClasses());
             server.addScanClasses(config.getClasses());
 
-            config.addHandlers(server.config.getHandlers());
-
             server.openConnection();
             server.startAcceptor();
 
