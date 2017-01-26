@@ -192,7 +192,6 @@ class RequestParser {
             return pb;
     }
 
-    // TODO support binary content
     private static void readBody(InputStream in, StringBuilder sb, Request req) throws IOException {
         final RequestBody body = req.getBody();
 
