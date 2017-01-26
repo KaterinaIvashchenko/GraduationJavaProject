@@ -19,7 +19,6 @@ public class SessionTest {
         Session session = new Session();
         session.setExpired(true);
         session.setParam("name", "Vasya");
-        session.getParam("name");
     }
 
     @Test
