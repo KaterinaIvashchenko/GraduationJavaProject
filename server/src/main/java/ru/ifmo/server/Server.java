@@ -1,7 +1,6 @@
 
 package ru.ifmo.server;
 
-import com.sun.activation.registries.MimeTypeFile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,12 +8,10 @@ import ru.ifmo.server.annotation.URL;
 import ru.ifmo.server.util.Utils;
 
 
-import javax.activation.MimetypesFileTypeMap;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.ServerSocket;
@@ -25,7 +22,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolver.length;
 import static ru.ifmo.server.Http.*;
 import static ru.ifmo.server.util.Utils.htmlMessage;
 
@@ -314,21 +310,48 @@ public class Server implements Closeable {
 
     private String findMime(File file) {
         if (file.getName().endsWith(".jpeg")) {
-            return Http.MIME_IMAGE_JPEG;
+            final String MIME_IMAGE_JPEG = "image/jpeg";
+            return MIME_IMAGE_JPEG;
         } else if (file.getName().endsWith(".jpg")) {
-            return Http.MIME_IMAGE_JPG;
+            final String MIME_IMAGE_JPG = "image/jpg";
+            return MIME_IMAGE_JPG;
         } else if (file.getName().endsWith(".gif")) {
-            return Http.MIME_IMAGE_GIF;
+            final String MIME_IMAGE_GIF = "image/gif";
+            return MIME_IMAGE_GIF;
+        } else if (file.getName().endsWith(".png")) {
+            final String MIME_IMAGE_PNG = "image/png";
+            return MIME_IMAGE_PNG;
         } else if (file.getName().endsWith(".html")) {
-            return Http.MIME_TEXT_HTML;
+            final String MIME_TEXT_HTML = "text/html";
+            return MIME_TEXT_HTML;
+        } else if (file.getName().endsWith(".htm")) {
+            final String MIME_TEXT_HTML = "text/htm";
+            return MIME_TEXT_HTML;
+        } else if (file.getName().endsWith(".txt")) {
+            final String MIME_TEXT_TXT = "text/txt";
+            return MIME_TEXT_TXT;
         } else if (file.getName().endsWith(".pdf")) {
-            return Http.MIME_APPLICATION_PDF;
+            final String MIME_APPLICATION_PDF = "application/pdf";
+            return MIME_APPLICATION_PDF;
+        } else if (file.getName().endsWith(".js")) {
+            final String MIME_APPLICATION_PDF = "application/javascript";
+            return MIME_APPLICATION_PDF;
+        } else if (file.getName().endsWith(".docx")) {
+            final String MIME_APPLICATION_PDF = "application/msword";
+            return MIME_APPLICATION_PDF;
+        } else if (file.getName().endsWith(".doc")) {
+            final String MIME_APPLICATION_PDF = "application/msword";
+            return MIME_APPLICATION_PDF;
+        } else if (file.getName().endsWith(".xls")) {
+            final String MIME_APPLICATION_PDF = "application/msexcel";
+            return MIME_APPLICATION_PDF;
         } else if (file.getName().endsWith(".css")) {
-            return Http.MIME_TEXT_CSS;
+            final String MIME_TEXT_CSS = "text/css";
+            return MIME_TEXT_CSS;
         }
-        return Http.MIME_TEXT_PLAIN;
+        final String MIME_TEXT_PLAIN = "text/plain";
+        return MIME_TEXT_PLAIN;
     }
-
 
 
     private void findPath(Request req, Response resp, Socket sock, String path) throws IOException {

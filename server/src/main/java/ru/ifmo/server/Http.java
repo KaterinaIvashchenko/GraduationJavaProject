@@ -13,6 +13,7 @@ public class Http {
     public static final int SC_SERVER_ERROR = 500;
     public static final int SC_NOT_IMPLEMENTED = 501;
     public static String[] statusNames = new String[600];
+
     static {
         statusNames[SC_CONTINUE] = "Continue";
         statusNames[SC_OK] = "OK";
@@ -29,15 +30,11 @@ public class Http {
 
     // Mime types
     public static final String MIME_TEXT_PLAIN = "text/plain";
-    public static final String MIME_TEXT_CSS = "text/css";
-    public static final String MIME_IMAGE_GIF= "image/gif";
-    public static final String MIME_IMAGE_JPEG = "image/jpeg";
-    public static final String MIME_IMAGE_JPG = "image/jpg";
-    public static final String MIME_TEXT_HTML = "text/html";
     public static final String MIME_URL_ENCODED = "application/x-www-form-urlencoded";
-    public static final String MIME_APPLICATION_PDF = "application/pdf";
 
 
-    /** OK header that preceded rest response data. */
+    /**
+     * OK header that preceded rest response data.
+     */
     public static final String OK_HEADER = "HTTP/1.0 200 OK\r\n\r\n";
 }

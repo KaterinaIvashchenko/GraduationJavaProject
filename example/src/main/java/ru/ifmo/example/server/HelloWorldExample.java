@@ -2,8 +2,7 @@ package ru.ifmo.example.server;
 
 import ru.ifmo.server.*;
 
-import java.io.File;
-import java.io.OutputStreamWriter;
+
 import java.io.Writer;
 
 /**
@@ -11,10 +10,14 @@ import java.io.Writer;
  */
 public class HelloWorldExample {
     public static void main(String[] args) {
-
-        ServerConfig config = new ServerConfig();
-
-        config.setWorkDir(new File("D:\\JavaCourse2\\GraduationJavaProject\\example\\src\\main\\resources"));
+        ServerConfig config = new ServerConfig()
+                .addHandler("/index", new Handler() {
+                    @Override
+                    public void handle(Request request, Response response) throws Exception {
+                        Writer writer = response.getWriter();
+                        writer.write("Hello World!");
+                    }
+                });
 
         Server.start(config);
     }
