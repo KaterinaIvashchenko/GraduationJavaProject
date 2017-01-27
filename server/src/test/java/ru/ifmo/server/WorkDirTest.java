@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 import static junit.framework.TestCase.assertEquals;
 import static ru.ifmo.server.TestUtils.assertStatusCode;
@@ -23,7 +25,7 @@ import static ru.ifmo.server.TestUtils.assertStatusCode;
 /**
  * Created by nexxie on 27.01.2017.
  */
-public class FilePath {
+public class WorkDirTest {
         private static final HttpHost host = new HttpHost("localhost", ServerConfig.DFLT_PORT);
         private static Server server;
         private CloseableHttpClient client;

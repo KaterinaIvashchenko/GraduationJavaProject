@@ -1,7 +1,6 @@
 
 package ru.ifmo.server;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.ifmo.server.annotation.URL;
@@ -128,7 +127,6 @@ public class Server implements Closeable {
 
             server.openConnection();
             server.startAcceptor();
-
 
             LOG.info("Server started on port: {}", config.getPort());
 
@@ -338,7 +336,6 @@ public class Server implements Closeable {
         Handler handler = config.handler(path);
 
         if (handler != null) {
-
             try {
                 handler.handle(req, resp);
                 flushResponse(req, resp);
@@ -348,16 +345,14 @@ public class Server implements Closeable {
                 respond(SC_SERVER_ERROR, htmlMessage(SC_SERVER_ERROR + " Server error"), req, resp);
             }
         } else {
-            findPath(req, resp, sock, path);
-
-
-            respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
-                    sock.getOutputStream());
+            ReflectHandler reflectHandler = classHandlers.get(req.getPath());
+            if (reflectHandler != null && reflectHandler.isApplicable(req.method))
+                processReflectHandler(reflectHandler, req, resp, sock);
+            else {
+                findPath(req, resp, sock, path);
+            }
         }
-
-
     }
-
 
     private String findMime(File file) {
         if (file.getName().endsWith(".jpeg") || file.getName().endsWith(".jpg")) {
@@ -384,26 +379,28 @@ public class Server implements Closeable {
         return MIME_BINARY;
     }
 
-
     private void findPath(Request req, Response resp, Socket sock, String path) throws IOException {
-        ReflectHandler reflectHandler = classHandlers.get(req.getPath());
-        if (reflectHandler != null && reflectHandler.isApplicable(req.method))
-            processReflectHandler(reflectHandler, req, resp, sock);
-        else {
-            String dirPath = config.getWorkDir().getAbsolutePath();
+        File workDir = config.getWorkDir();
+        File file;
 
-            String filePath = dirPath + path;
+        if (workDir != null && (file = findFile(path, workDir)).exists()) {
+            resp.getOutputStreamBuffer().write(Files.readAllBytes(file.toPath()));
 
-            File file = new File(filePath);
-
-            if (file.exists()) {
-                resp.getOutputStreamBuffer().write(Files.readAllBytes(file.toPath()));
-
-                resp.setContentType(findMime(file));
-                flushResponse(resp);
-            }
-
+            resp.setContentType(findMime(file));
+            flushResponse(req, resp);
         }
+        else {
+            respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
+                    sock.getOutputStream());
+        }
+    }
+
+    private File findFile(String path, File workDir) {
+        String dirPath = workDir.getAbsolutePath();
+
+        String filePath = dirPath + path;
+
+        return new File(filePath);
     }
 
     static void respond(int code, String statusMsg, String content, OutputStream out) throws IOException {

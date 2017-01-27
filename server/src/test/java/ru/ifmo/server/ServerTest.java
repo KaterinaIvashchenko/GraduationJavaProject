@@ -125,7 +125,7 @@ public class ServerTest {
         HttpPost post = new HttpPost(uri);
 
         StringEntity stringEntity = new StringEntity("java");
-        stringEntity.setContentType(MIME_BINARY);
+        stringEntity.setContentType(MIME_TEXT_PLAIN);
         post.setEntity(stringEntity);
 
         CloseableHttpResponse response = client.execute(host, post);
@@ -160,7 +160,7 @@ public class ServerTest {
         HttpPut put = new HttpPut(uri);
 
         StringEntity stringEntity = new StringEntity("java");
-        stringEntity.setContentType(MIME_BINARY);
+        stringEntity.setContentType(MIME_TEXT_PLAIN);
         put.setEntity(stringEntity);
 
         CloseableHttpResponse response = client.execute(host, put);
