@@ -1,10 +1,7 @@
 package ru.ifmo.server;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -23,7 +20,7 @@ public class ServerConfig {
 
     public ServerConfig() {
         handlers = new HashMap<>();
-        classes = new ArrayList<>();
+        classes = new HashSet<>();
     }
 
     public ServerConfig(ServerConfig config) {
@@ -31,7 +28,7 @@ public class ServerConfig {
 
         port = config.port;
         handlers = new HashMap<>(config.handlers);
-        classes = new ArrayList<>(config.classes);
+        classes = new HashSet<>(config.classes);
         socketTimeout = config.socketTimeout;
         dispatcher = config.dispatcher;
         workDir = config.workDir;
@@ -137,6 +134,10 @@ public class ServerConfig {
         this.classes.addAll(classes);
 
         return this;
+    }
+
+    public void addClass(Class<?> cls) {
+        this.classes.add(cls);
     }
 
     public Collection<Class<?>> getClasses() {

@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import ru.ifmo.server.annotation.URL;
 import ru.ifmo.server.util.Utils;
 
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -19,10 +18,12 @@ import java.net.Socket;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static ru.ifmo.server.Http.*;
+import static ru.ifmo.server.Session.SESSION_COOKIENAME;
 import static ru.ifmo.server.util.Utils.htmlMessage;
 
 /**
@@ -64,6 +65,9 @@ public class Server implements Closeable {
 
     private ExecutorService acceptorPool;
     private ExecutorService connectionProcessingPool;
+    private Thread lisThread;
+
+    private static Map<String, Session> sessions = new ConcurrentHashMap<>();
 
     private Map<String, ReflectHandler> classHandlers;
 
@@ -72,6 +76,26 @@ public class Server implements Closeable {
     private Server(ServerConfig config) {
         this.config = new ServerConfig(config);
         classHandlers = new HashMap<>();
+    }
+
+    static Map<String, Session> getSessions() {
+        return sessions;
+    }
+
+    static void setSessions(String key, Session session) {
+        Server.sessions.put(key, session);
+    }
+
+    static void removeSession(String key) {
+        Server.sessions.remove(key);
+    }
+
+    private void listenSessions() throws IOException {
+        SessionListener sessionListener = new SessionListener();
+        lisThread = new Thread(sessionListener);
+        lisThread.start();
+
+        LOG.info("Session listener started, deleting by timeout.");
     }
 
     public static Server start() {
@@ -107,6 +131,9 @@ public class Server implements Closeable {
 
 
             LOG.info("Server started on port: {}", config.getPort());
+
+            server.listenSessions();
+
             return server;
         } catch (IOException e) {
             throw new ServerException("Cannot start server on port: " + config.getPort());
@@ -116,7 +143,7 @@ public class Server implements Closeable {
     /**
      * Forces any content in the buffer to be written to the client
      */
-    private static void flushResponse(Response response) {
+    private static void flushResponse(Request request, Response response) {
         int statusCode = response.getStatusCode();
 
         if (statusCode == 0)
@@ -141,6 +168,27 @@ public class Server implements Closeable {
             for (String key : response.headers.keySet()) {
                 out.write((key + ":" + SPACE + response.headers.get(key) + CRLF).getBytes());
             }
+
+            if (request.getSession() != null) {
+                response.setCookie(new Cookie(SESSION_COOKIENAME, request.getSession().getId()));
+            }
+
+            if (response.setCookies != null) {
+
+                for (Cookie cookie : response.setCookies) {
+
+                    StringBuilder cookieline = new StringBuilder();
+
+                    cookieline.append(cookie.name + "=" + cookie.value);
+                    if (cookie.maxage != null) cookieline.append(";MAX-AGE=" + cookie.maxage);
+                    if (cookie.domain != null) cookieline.append(";DOMAIN=" + cookie.domain);
+                    if (cookie.path != null) cookieline.append(";PATH=" + cookie.path);
+
+                    out.write(("Set-Cookie:" + SPACE + cookieline.toString() + CRLF).getBytes());
+
+                }
+            }
+
             out.write(CRLF.getBytes());
             if (response.bufferOutputStream != null)
                 out.write(response.bufferOutputStream.toByteArray());
@@ -168,6 +216,8 @@ public class Server implements Closeable {
     public void stop() {
         acceptorPool.shutdownNow();
         connectionProcessingPool.shutdownNow();
+        lisThread.interrupt();
+
         Utils.closeQuiet(socket);
 
         socket = null;
@@ -232,7 +282,7 @@ public class Server implements Closeable {
     private void processReflectHandler(ReflectHandler rf, Request req, Response resp, Socket sock) throws IOException {
         try {
             rf.m.invoke(rf.obj, req, resp);
-            flushResponse(resp);
+            flushResponse(req, resp);
         } catch (Exception e) { // Handle any user exception here.
             if (LOG.isDebugEnabled())
                 LOG.error("Error invoke method:" + rf.m, e);
@@ -291,11 +341,11 @@ public class Server implements Closeable {
 
             try {
                 handler.handle(req, resp);
-                flushResponse(resp);
+                flushResponse(req, resp);
             } catch (Exception e) {
                 if (LOG.isDebugEnabled())
                     LOG.error("Server error:", e);
-                respond(SC_SERVER_ERROR, htmlMessage(SC_SERVER_ERROR + " Server error"), resp);
+                respond(SC_SERVER_ERROR, htmlMessage(SC_SERVER_ERROR + " Server error"), req, resp);
             }
         } else {
             findPath(req, resp, sock, path);
@@ -361,10 +411,10 @@ public class Server implements Closeable {
         out.flush();
     }
 
-    static void respond(int code, String content, Response resp) throws IOException {
+    static void respond(int code, String content, Request req, Response resp) throws IOException {
         resp.setStatusCode(code);
         resp.setBody(content.getBytes());
-        flushResponse(resp);
+        flushResponse(req, resp);
     }
 
     /**

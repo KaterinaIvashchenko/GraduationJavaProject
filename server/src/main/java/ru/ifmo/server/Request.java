@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.net.URI;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_LENGTH;
 import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_TYPE;
+import static ru.ifmo.server.Session.SESSION_COOKIENAME;
+import static ru.ifmo.server.Session.SESSION_LIVETIME;
 
 /**
  * Keeps request information: method, headers, params
@@ -24,6 +24,9 @@ public class Request {
     private RequestBody body;
     private Map<String, String> headers;
     private Map<String, String> args;
+    private Map<String, String> cookies;
+
+    private Session session;
 
     public Request(Socket socket) {
         this.socket = socket;
@@ -36,8 +39,7 @@ public class Request {
     public InputStream getInputStream() {
         try {
             return socket.getInputStream();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new ServerException("Unable retrieve input stream.", e);
         }
     }
@@ -99,6 +101,51 @@ public class Request {
 
         return Collections.unmodifiableMap(args);
     }
+
+    void insertCookie(String name, String value) {
+        if (cookies == null) {
+            cookies = new HashMap<>();
+        }
+        cookies.put(name, value);
+    }
+
+    public Map<String, String> getCookies() {
+
+        if (getHeaders().get("Cookie") == null) {
+            return Collections.emptyMap();
+        }
+
+        return Collections.unmodifiableMap(cookies);
+    }
+
+    public String getCookieValue(String cookiename) {
+        return getCookies().get(cookiename);
+    }
+
+    private boolean containsJSIDCookie() {
+        return getCookies().containsKey(SESSION_COOKIENAME);
+    }
+
+    public Session getSession() {
+        if (session == null) {
+            session = getSession(false);
+        }
+        return session;
+    }
+
+    public Session getSession(boolean create) {
+        if (!containsJSIDCookie() || create) {
+            session = new Session();
+            Server.setSessions(session.getId(), session);
+        } else {
+            session = Server.getSessions().get(getCookieValue(SESSION_COOKIENAME));
+            if (session == null) {
+                session = getSession(true);
+            }
+        }
+        return session;
+    }
+
 
     @Override
     public String toString() {

@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_TYPE;
 
@@ -20,9 +18,29 @@ public class Response {
     ByteArrayOutputStream bufferOutputStream;
     PrintWriter printWriter;
     Map<String,String> headers = new LinkedHashMap<>();
+    List<Cookie> setCookies;
 
     Response(Socket socket) {
         this.socket = socket;
+    }
+
+    public void setCookie(Cookie cookie) {
+
+        if (setCookies == null) {
+            setCookies = new ArrayList<>();
+        }
+        setCookies.add(cookie);
+    }
+
+    public void resetCookie(Cookie cookie) {
+
+        if (setCookies == null) {
+            setCookies = new ArrayList<>();
+        }
+
+        cookie.value = " ";
+
+        setCookies.add(cookie);
     }
 
     /**

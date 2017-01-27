@@ -51,6 +51,13 @@ public class PropertiesConfigParser extends AbstractConfigParser {
                     config.addHandler(split[0], handler);
                 }
 
+            } else if ("scanclass".equals(key)) {
+
+                String[] mapping = val.split(",");
+
+                for (String route : mapping) {
+                    config.addClass(Class.forName(route));
+                }
             }
 
             else {
