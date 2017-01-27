@@ -336,7 +336,6 @@ public class Server implements Closeable {
         } else if (file.getName().endsWith(".css")) {
             return MIME_TEXT_CSS;
         }
-        final String MIME_TEXT_PLAIN = "text/plain";
         return MIME_TEXT_PLAIN;
     }
 
