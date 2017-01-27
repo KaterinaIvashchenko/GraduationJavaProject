@@ -63,7 +63,6 @@ public class Server implements Closeable {
     private ExecutorService connectionProcessingPool;
 
     private Map<String, ReflectHandler> classHandlers;
-    private static List<String> compressions;
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
@@ -113,7 +112,7 @@ public class Server implements Closeable {
     /**
      * Forces any content in the buffer to be written to the client
      */
-    public static void flushResponse(Response response) {
+    public static void flushResponse(Request request, Response response) {
         int statusCode = response.getStatusCode();
 
         if (statusCode == 0)
@@ -139,7 +138,7 @@ public class Server implements Closeable {
                 out.write((key+":"+SPACE+response.headers.get(key) + CRLF).getBytes());
             }
 
-            flushBody(response, out);
+            flushBody(request, response, out);
 
             out.flush();
         } catch (IOException e) {
@@ -189,16 +188,16 @@ public class Server implements Closeable {
         }
     }
 
-    private static void flushBody(Response response, OutputStream out) throws IOException {
+    private static void flushBody(Request request, Response response, OutputStream out) throws IOException {
         if (response.bufferOutputStream!=null) {
-            if (ServerConfig.getCompressionType() == CompressionType.GZIP && compressions.contains("gzip")) {
+            if (ServerConfig.getCompressionType() == CompressionType.GZIP && request.getHeaders().get("Accept-Encoding").contains("gzip")) {
                 out.write(("Content-Encoding: gzip" + CRLF).getBytes());
                 out.write(CRLF.getBytes());
                 GZIPOutputStream gzipOutputStream = new GZIPOutputStream(out);
                 gzipOutputStream.write(response.bufferOutputStream.toByteArray());
                 gzipOutputStream.flush();
                 gzipOutputStream.finish();
-            } else if (ServerConfig.getCompressionType() == CompressionType.DEFLATE && compressions.contains("deflate")) {
+            } else if (ServerConfig.getCompressionType() == CompressionType.DEFLATE && request.getHeaders().get("Accept-Encoding").contains("deflate")) {
                 out.write(("Content-Encoding: deflate" + CRLF).getBytes());
                 out.write(CRLF.getBytes());
                 DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(out);
@@ -251,7 +250,7 @@ public class Server implements Closeable {
     private void processReflectHandler(ReflectHandler rf, Request req, Response resp, Socket sock) throws IOException {
         try {
             rf.m.invoke(rf.obj, req, resp);
-            flushResponse(resp);
+            flushResponse(req, resp);
         } catch (Exception e) { // Handle any user exception here.
             if (LOG.isDebugEnabled())
                 LOG.error("Error invoke method:" + rf.m, e);
@@ -298,8 +297,6 @@ public class Server implements Closeable {
             return;
         }
 
-        compressions = req.getAviableCompressions();
-
         Response resp = new Response(sock);
 
         Dispatcher dispatcher = config.getDispatcher();
@@ -311,12 +308,12 @@ public class Server implements Closeable {
         if (handler != null) {
             try {
                 handler.handle(req, resp);
-                flushResponse(resp);
+                flushResponse(req, resp);
             }
             catch (Exception e) {
                 if (LOG.isDebugEnabled())
                     LOG.error("Server error:", e);
-                respond(SC_SERVER_ERROR,htmlMessage(SC_SERVER_ERROR + " Server error"),resp);
+                respond(SC_SERVER_ERROR,htmlMessage(SC_SERVER_ERROR + " Server error"), req, resp);
             }
         } else {
             ReflectHandler reflectHandler = classHandlers.get(req.getPath());
@@ -333,10 +330,10 @@ public class Server implements Closeable {
         out.flush();
     }
 
-    static void respond(int code, String content, Response resp) throws IOException {
+    static void respond(int code, String content, Request req, Response resp) throws IOException {
         resp.setStatusCode(code);
         resp.setBody(content.getBytes());
-        flushResponse(resp);
+        flushResponse(req, resp);
     }
 
     /**
