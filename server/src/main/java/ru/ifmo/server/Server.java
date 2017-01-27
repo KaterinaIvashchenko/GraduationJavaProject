@@ -105,6 +105,7 @@ public class Server implements Closeable {
             server.openConnection();
             server.startAcceptor();
 
+
             LOG.info("Server started on port: {}", config.getPort());
             return server;
         } catch (IOException e) {
@@ -115,7 +116,7 @@ public class Server implements Closeable {
     /**
      * Forces any content in the buffer to be written to the client
      */
-    public static void flushResponse(Response response) {
+    private static void flushResponse(Response response) {
         int statusCode = response.getStatusCode();
 
         if (statusCode == 0)
@@ -309,34 +310,28 @@ public class Server implements Closeable {
 
 
     private String findMime(File file) {
-        if (file.getName().endsWith(".jpeg")) {
+        if (file.getName().endsWith(".jpeg") || file.getName().endsWith(".jpg")) {
             return Http.MIME_IMAGE_JPEG;
-        } else if (file.getName().endsWith(".jpg")) {
-            return Http.MIME_IMAGE_JPG;
         } else if (file.getName().endsWith(".gif")) {
             return Http.MIME_IMAGE_GIF;
         } else if (file.getName().endsWith(".png")) {
             return Http.MIME_IMAGE_PNG;
-        } else if (file.getName().endsWith(".html")) {
+        } else if (file.getName().endsWith(".html") || file.getName().endsWith(".htm")) {
             return Http.MIME_TEXT_HTML;
-        } else if (file.getName().endsWith(".htm")) {
-             return MIME_TEXT_HTM;
         } else if (file.getName().endsWith(".txt")) {
-            return Http.MIME_TEXT_TXT;
+            return Http.MIME_TEXT_PLAIN;
         } else if (file.getName().endsWith(".pdf")) {
             return Http.MIME_APPLICATION_PDF;
         } else if (file.getName().endsWith(".js")) {
             return Http.MIME_APPLICATION_JS;
-        } else if (file.getName().endsWith(".docx")) {
-            return Http.MIME_APPLICATION_DOC;
-        } else if (file.getName().endsWith(".doc")) {
-            return Http.MIME_APPLICATION_DOCX;
+        } else if (file.getName().endsWith(".docx") || file.getName().endsWith(".doc")) {
+            return Http.MIME_APPLICATION_MSWORD;
         } else if (file.getName().endsWith(".xls")) {
-            return MIME_APPLICATION_XLS;
+            return MIME_APPLICATION_MSEXCEL;
         } else if (file.getName().endsWith(".css")) {
             return MIME_TEXT_CSS;
         }
-        return MIME_TEXT_PLAIN;
+        return MIME_BINARY;
     }
 
 
