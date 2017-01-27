@@ -310,43 +310,30 @@ public class Server implements Closeable {
 
     private String findMime(File file) {
         if (file.getName().endsWith(".jpeg")) {
-            final String MIME_IMAGE_JPEG = "image/jpeg";
-            return MIME_IMAGE_JPEG;
+            return Http.MIME_IMAGE_JPEG;
         } else if (file.getName().endsWith(".jpg")) {
-            final String MIME_IMAGE_JPG = "image/jpg";
-            return MIME_IMAGE_JPG;
+            return Http.MIME_IMAGE_JPG;
         } else if (file.getName().endsWith(".gif")) {
-            final String MIME_IMAGE_GIF = "image/gif";
-            return MIME_IMAGE_GIF;
+            return Http.MIME_IMAGE_GIF;
         } else if (file.getName().endsWith(".png")) {
-            final String MIME_IMAGE_PNG = "image/png";
-            return MIME_IMAGE_PNG;
+            return Http.MIME_IMAGE_PNG;
         } else if (file.getName().endsWith(".html")) {
-            final String MIME_TEXT_HTML = "text/html";
-            return MIME_TEXT_HTML;
+            return Http.MIME_TEXT_HTML;
         } else if (file.getName().endsWith(".htm")) {
-            final String MIME_TEXT_HTML = "text/htm";
-            return MIME_TEXT_HTML;
+             return MIME_TEXT_HTM;
         } else if (file.getName().endsWith(".txt")) {
-            final String MIME_TEXT_TXT = "text/txt";
-            return MIME_TEXT_TXT;
+            return Http.MIME_TEXT_TXT;
         } else if (file.getName().endsWith(".pdf")) {
-            final String MIME_APPLICATION_PDF = "application/pdf";
-            return MIME_APPLICATION_PDF;
+            return Http.MIME_APPLICATION_PDF;
         } else if (file.getName().endsWith(".js")) {
-            final String MIME_APPLICATION_PDF = "application/javascript";
-            return MIME_APPLICATION_PDF;
+            return Http.MIME_APPLICATION_JS;
         } else if (file.getName().endsWith(".docx")) {
-            final String MIME_APPLICATION_PDF = "application/msword";
-            return MIME_APPLICATION_PDF;
+            return Http.MIME_APPLICATION_DOC;
         } else if (file.getName().endsWith(".doc")) {
-            final String MIME_APPLICATION_PDF = "application/msword";
-            return MIME_APPLICATION_PDF;
+            return Http.MIME_APPLICATION_DOCX;
         } else if (file.getName().endsWith(".xls")) {
-            final String MIME_APPLICATION_PDF = "application/msexcel";
-            return MIME_APPLICATION_PDF;
+            return MIME_APPLICATION_XLS;
         } else if (file.getName().endsWith(".css")) {
-            final String MIME_TEXT_CSS = "text/css";
             return MIME_TEXT_CSS;
         }
         final String MIME_TEXT_PLAIN = "text/plain";

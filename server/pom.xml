@@ -67,10 +67,6 @@
             <artifactId>httpclient</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpcore</artifactId>
-            <version>RELEASE</version>
-        </dependency>
+
     </dependencies>
 </project>

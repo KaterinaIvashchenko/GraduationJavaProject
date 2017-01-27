@@ -29,8 +29,22 @@ public class Http {
     public static final String HEADER_NAME_CONTENT_LENGTH = "Content-Length";
 
     // Mime types
-    public static final String MIME_TEXT_PLAIN = "text/plain";
+    public static final String MIME_TEXT_PLAIN = "application/octet-stream";
+    public static final String MIME_IMAGE_PNG = "text/png";
+    public static final String MIME_IMAGE_JPEG = "image/jpeg";
+    public static final String MIME_IMAGE_GIF = "image/gif";
+    public static final String MIME_IMAGE_JPG = "image/jpg";
+    public static final String MIME_TEXT_HTML = "application/octet-stream";
+    public static final String MIME_TEXT_HTM = "application/octet-stream";
+    public static final String MIME_TEXT_TXT = "text/txt";
+    public static final String MIME_TEXT_CSS = "text/css";
     public static final String MIME_URL_ENCODED = "application/x-www-form-urlencoded";
+    public static final String MIME_APPLICATION_PDF = "application/pdf";
+    public static final String MIME_APPLICATION_JS = "application/javascript";
+    public static final String MIME_APPLICATION_DOC = "application/msword";
+    public static final String MIME_APPLICATION_DOCX = "application/msword";
+    public static final String MIME_APPLICATION_XLS = "application/msexcel";
+
 
 
     /**
