@@ -33,7 +33,7 @@ public class Http {
     public static final String MIME_IMAGE_PNG = "text/png";
     public static final String MIME_IMAGE_JPEG = "image/jpeg";
     public static final String MIME_IMAGE_GIF = "image/gif";
-    public static final String MIME_TEXT_HTML = "application/octet-stream";
+    public static final String MIME_TEXT_HTML = "text/html";
     public static final String MIME_TEXT_PLAIN = "text/txt";
     public static final String MIME_TEXT_CSS = "text/css";
     public static final String MIME_URL_ENCODED = "application/x-www-form-urlencoded";

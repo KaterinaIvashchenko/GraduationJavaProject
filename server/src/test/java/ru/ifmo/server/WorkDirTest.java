@@ -32,8 +32,10 @@ public class WorkDirTest {
         private static ServerConfig cfg;
 
         @Before
-        public void init() {
+        public void init() throws IOException {
             cfg = new ServerConfig();
+            File tmp = File.createTempFile("test", ".xml");
+            Files.copy(getClass().getClassLoader().getResourceAsStream("web-server.xml"), tmp.toPath(), StandardCopyOption.REPLACE_EXISTING);
             cfg.setWorkDir(new File("D:\\JavaCourse2\\GraduationJavaProject\\example\\src\\main\\resources"));
             server = Server.start(cfg);
             client = HttpClients.createDefault();

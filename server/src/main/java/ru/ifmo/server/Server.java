@@ -1,6 +1,7 @@
 
 package ru.ifmo.server;
 
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.ifmo.server.annotation.URL;
@@ -350,6 +351,7 @@ public class Server implements Closeable {
                 processReflectHandler(reflectHandler, req, resp, sock);
             else {
                 findPath(req, resp, sock, path);
+
             }
         }
     }
