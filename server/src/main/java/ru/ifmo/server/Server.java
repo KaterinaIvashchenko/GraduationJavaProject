@@ -190,20 +190,10 @@ public class Server implements Closeable {
 
     private static void flushBody(Request request, Response response, OutputStream out) throws IOException {
         if (response.bufferOutputStream!=null) {
-            if (ServerConfig.getCompressionType() == CompressionType.GZIP && request.getHeaders().get("Accept-Encoding").contains("gzip")) {
-                out.write(("Content-Encoding: gzip" + CRLF).getBytes());
-                out.write(CRLF.getBytes());
-                GZIPOutputStream gzipOutputStream = new GZIPOutputStream(out);
-                gzipOutputStream.write(response.bufferOutputStream.toByteArray());
-                gzipOutputStream.flush();
-                gzipOutputStream.finish();
-            } else if (ServerConfig.getCompressionType() == CompressionType.DEFLATE && request.getHeaders().get("Accept-Encoding").contains("deflate")) {
-                out.write(("Content-Encoding: deflate" + CRLF).getBytes());
-                out.write(CRLF.getBytes());
-                DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(out);
-                deflaterOutputStream.write(response.bufferOutputStream.toByteArray());
-                deflaterOutputStream.flush();
-                deflaterOutputStream.finish();
+            if (ServerConfig.getCompressionType() == CompressionType.DEFLATE && request.getHeaders().get("Accept-Encoding").contains("deflate")) {
+                compressData(out, response, CompressionType.DEFLATE);
+            } else if (ServerConfig.getCompressionType() == CompressionType.GZIP && request.getHeaders().get("Accept-Encoding").contains("gzip")) {
+                compressData(out, response, CompressionType.GZIP);
             } else {
                 out.write(CRLF.getBytes());
                 out.write(response.bufferOutputStream.toByteArray());
@@ -323,6 +313,21 @@ public class Server implements Closeable {
                 respond(SC_NOT_FOUND, "Not Found", htmlMessage(SC_NOT_FOUND + " Not found"),
                         sock.getOutputStream());
         }
+    }
+
+    private static void compressData(OutputStream out, Response response, CompressionType cType) throws IOException {
+
+        DeflaterOutputStream compressedOut = new DeflaterOutputStream(out);
+
+        if (cType == CompressionType.DEFLATE) {
+            out.write(("Content-Encoding: deflate" + CRLF + CRLF).getBytes());
+        } else if (cType == CompressionType.GZIP) {
+            out.write(("Content-Encoding: gzip" + CRLF + CRLF).getBytes());
+            compressedOut = new GZIPOutputStream(out);
+        }
+        compressedOut.write(response.bufferOutputStream.toByteArray());
+        compressedOut.flush();
+        compressedOut.finish();
     }
 
     static void respond(int code, String statusMsg, String content, OutputStream out) throws IOException {
