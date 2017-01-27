@@ -25,4 +25,5 @@ public interface Handler {
      * @throws Exception If thrown 500 error code will be sent to client.
      */
     void handle(Request request, Response response) throws Exception;
+
 }

@@ -17,12 +17,24 @@ import static ru.ifmo.server.Http.HEADER_NAME_CONTENT_TYPE;
 public class Response {
     final Socket socket;
     int statusCode;
+    String location;
+
+
+
     ByteArrayOutputStream bufferOutputStream;
     PrintWriter printWriter;
     Map<String,String> headers = new LinkedHashMap<>();
 
+
+
     Response(Socket socket) {
         this.socket = socket;
+    }
+
+    public void redirect(String location) {
+        this.location = location;
+
+
     }
 
     /**

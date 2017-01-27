@@ -11,11 +11,14 @@ import java.io.Writer;
 public class HelloWorldExample {
     public static void main(String[] args) {
         ServerConfig config = new ServerConfig()
-                .addHandler("/index", new Handler() {
+                .addHandler("/index2", new Handler() {
+
                     @Override
                     public void handle(Request request, Response response) throws Exception {
-                        Writer writer = response.getWriter();
-                        writer.write("Hello World!");
+                        //response.setStatusCode(301);
+                        //response.setHeader("Location", "https://habrahabr.ru");
+                        response.redirect("https://habrahabr.ru");
+                        //System.out.println(response.getHeaders());
                     }
                 });
 

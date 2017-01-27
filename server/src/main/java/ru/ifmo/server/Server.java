@@ -113,7 +113,16 @@ public class Server implements Closeable {
      * Forces any content in the buffer to be written to the client
      */
     public static void flushResponse (Response response) {
+
+        if (response.location != null) {
+            response.setStatusCode(301);
+            response.setHeader("Location", response.location);
+        }
+
+
+
         int statusCode = response.getStatusCode();
+
 
         if (statusCode == 0)
             statusCode = SC_OK;

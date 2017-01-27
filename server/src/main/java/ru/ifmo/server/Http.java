@@ -8,6 +8,7 @@ public class Http {
     public static final int SC_CONTINUE = 100;
     public static final int SC_OK = 200;
     public static final int SC_MULTIPLE_CHOICES = 300;
+    public static final int SC_MOVED_PERMANENTLY = 301;
     public static final int SC_BAD_REQUEST = 400;
     public static final int SC_NOT_FOUND = 404;
     public static final int SC_SERVER_ERROR = 500;
@@ -21,6 +22,8 @@ public class Http {
         statusNames[SC_NOT_FOUND] = "Not Found";
         statusNames[SC_SERVER_ERROR] = "Internal Server Error";
         statusNames[SC_NOT_IMPLEMENTED] = "Not Implemented";
+        statusNames[SC_MOVED_PERMANENTLY] = "Moved permanently";
+
     }
 
     // Header names
