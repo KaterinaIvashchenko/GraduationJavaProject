@@ -46,7 +46,7 @@ public class Session {
         return id;
     }
 
-    public synchronized void invalidate() {
+    public void invalidate() {
         expired = true;
         Server.removeSession(id);
     }

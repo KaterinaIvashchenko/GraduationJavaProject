@@ -63,6 +63,7 @@ public class Server implements Closeable {
 
     private ExecutorService acceptorPool;
     private ExecutorService connectionProcessingPool;
+    private Thread lisThread;
 
     private static Map<String, Session> sessions = new ConcurrentHashMap<>();
 
@@ -75,22 +76,21 @@ public class Server implements Closeable {
         classHandlers = new HashMap<>();
     }
 
-    public static Map<String, Session> getSessions() {
+    static Map<String, Session> getSessions() {
         return sessions;
     }
 
-    public static void setSessions(String key, Session session) {
+    static void setSessions(String key, Session session) {
         Server.sessions.put(key, session);
     }
 
-    public static void removeSession(String key) {
+    static void removeSession(String key) {
         Server.sessions.remove(key);
     }
 
     private void listenSessions() throws IOException {
         SessionListener sessionListener = new SessionListener();
-        Thread lisThread = new Thread(sessionListener);
-        lisThread.setDaemon(true);
+        lisThread = new Thread(sessionListener);
         lisThread.start();
 
         LOG.info("Session listener started, deleting by timeout.");
@@ -140,7 +140,7 @@ public class Server implements Closeable {
     /**
      * Forces any content in the buffer to be written to the client
      */
-    public static void flushResponse(Response response) {
+    public static void flushResponse(Request request, Response response) {
         int statusCode = response.getStatusCode();
 
         if (statusCode == 0)
@@ -164,6 +164,10 @@ public class Server implements Closeable {
 
             for (String key : response.headers.keySet()) {
                 out.write((key + ":" + SPACE + response.headers.get(key) + CRLF).getBytes());
+            }
+
+            if (request.getSession() != null) {
+                response.setCookie(new Cookie(SESSION_COOKIENAME, request.getSession().getId()));
             }
 
             if (response.setCookies != null) {
@@ -203,18 +207,13 @@ public class Server implements Closeable {
         acceptorPool.submit(new ConnectionHandler());
     }
 
-    private void sendSessionCookie(Request req, Response resp) {
-        if (req.getSession() != null) {
-            resp.setCookie(new Cookie(SESSION_COOKIENAME, req.getSession().getId()));
-        }
-    }
-
     /**
      * Stops the server.
      */
     public void stop() {
         acceptorPool.shutdownNow();
         connectionProcessingPool.shutdownNow();
+        lisThread.interrupt();
 
         Utils.closeQuiet(socket);
 
@@ -280,7 +279,7 @@ public class Server implements Closeable {
     private void processReflectHandler(ReflectHandler rf, Request req, Response resp, Socket sock) throws IOException {
         try {
             rf.m.invoke(rf.obj, req, resp);
-            flushResponse(resp);
+            flushResponse(req, resp);
         } catch (Exception e) { // Handle any user exception here.
             if (LOG.isDebugEnabled())
                 LOG.error("Error invoke method:" + rf.m, e);
@@ -338,12 +337,11 @@ public class Server implements Closeable {
         if (handler != null) {
             try {
                 handler.handle(req, resp);
-                sendSessionCookie(req, resp);
-                flushResponse(resp);
+                flushResponse(req, resp);
             } catch (Exception e) {
                 if (LOG.isDebugEnabled())
                     LOG.error("Server error:", e);
-                respond(SC_SERVER_ERROR, htmlMessage(SC_SERVER_ERROR + " Server error"), resp);
+                respond(SC_SERVER_ERROR, htmlMessage(SC_SERVER_ERROR + " Server error"), req, resp);
             }
         } else {
             ReflectHandler reflectHandler = classHandlers.get(req.getPath());
@@ -360,10 +358,10 @@ public class Server implements Closeable {
         out.flush();
     }
 
-    static void respond(int code, String content, Response resp) throws IOException {
+    static void respond(int code, String content, Request req, Response resp) throws IOException {
         resp.setStatusCode(code);
         resp.setBody(content.getBytes());
-        flushResponse(resp);
+        flushResponse(req, resp);
     }
 
     /**
