@@ -2,7 +2,6 @@ package ru.ifmo.server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Collections;
@@ -18,14 +17,9 @@ public class Response {
     final Socket socket;
     int statusCode;
     String location;
-
-
-
     ByteArrayOutputStream bufferOutputStream;
     PrintWriter printWriter;
     Map<String,String> headers = new LinkedHashMap<>();
-
-
 
     Response(Socket socket) {
         this.socket = socket;

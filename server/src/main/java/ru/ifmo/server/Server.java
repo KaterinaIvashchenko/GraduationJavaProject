@@ -112,14 +112,13 @@ public class Server implements Closeable {
     /**
      * Forces any content in the buffer to be written to the client
      */
-    public static void flushResponse (Response response) {
+    public static void flushResponse(Request request, Response response) {
 
-        if (response.location != null) {
+        if(response.location!=null);
+        {
             response.setStatusCode(301);
-            response.setHeader("Location", response.location);
+            response.setHeader("location", response.location);
         }
-
-
 
         int statusCode = response.getStatusCode();
 
@@ -295,7 +294,7 @@ public class Server implements Closeable {
         if (handler != null) {
             try {
                 handler.handle(req, resp);
-                flushResponse(resp);
+                flushResponse(req, resp);
             }
             catch (Exception e) {
                 if (LOG.isDebugEnabled())
