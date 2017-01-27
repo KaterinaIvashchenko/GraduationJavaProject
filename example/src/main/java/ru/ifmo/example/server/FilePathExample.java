@@ -11,7 +11,7 @@ import java.io.Writer;
 public class FilePathExample {
     public static void main(String[] args) {
         ServerConfig config = new ServerConfig()
-                .setWorkDir(new File("D:\\JavaDiplomItmo2\\GraduationJavaProject\\example\\src\\main\\resource"));
+                .setWorkDir(new File("D:\\JavaDiplomItmo2\\GraduationJavaProject\\example\\src\\main\\resources"));
 
 
         Server.start(config);
